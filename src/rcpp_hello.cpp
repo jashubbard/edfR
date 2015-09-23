@@ -1,4 +1,5 @@
 #include <Rcpp.h>
+
 using namespace Rcpp;
 
 // This is a simple function using Rcpp that creates an R list
@@ -6,11 +7,11 @@ using namespace Rcpp;
 //
 // Learn more about how to use Rcpp at:
 //
-//   http://www.rcpp.org/
+  // http://www.rcpp.org/
 //   http://adv-r.had.co.nz/Rcpp.html
 //
 // and browse examples of code using Rcpp at:
-// 
+
 //   http://gallery.rcpp.org/
 //
 
@@ -21,3 +22,20 @@ List rcpp_hello() {
   List z            = List::create(x, y);
   return z;
 }
+
+
+// [[Rcpp::export]]
+int timesTwo(int x) {
+  int y = x*2;
+
+  return y;
+
+}
+
+// [[Rcpp::export]]
+int edfTest(char filename){
+   int x=5;
+   return x;
+ }
+
+

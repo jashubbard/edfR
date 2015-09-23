@@ -5,3 +5,11 @@ rcpp_hello <- function() {
     .Call('edfR_rcpp_hello', PACKAGE = 'edfR')
 }
 
+timesTwo <- function(x) {
+    .Call('edfR_timesTwo', PACKAGE = 'edfR', x)
+}
+
+edfTest <- function(filename) {
+    .Call('edfR_edfTest', PACKAGE = 'edfR', filename)
+}
+
