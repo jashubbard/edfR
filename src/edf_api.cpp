@@ -27,7 +27,6 @@ SEXP get_preamble(SEXP filename)
 }
 
 
-
 SEXP get_samples(SEXP filename, SEXP fields)
 {
 	int check(0);
@@ -188,6 +187,59 @@ SEXP get_messages(SEXP filename)
 	}
 	return(R_NilValue);
 }
+
+
+SEXP get_trial_count(SEXP filename)
+{
+
+    int check(0);
+
+    EDFFILE* ef = edf_open_file( as_string(filename), 0, 1, 0, &check);
+    int id = edf_get_trial_count(ef);
+    edf_close_file(ef);
+    SEXP ret;
+    ret = ScalarInteger(id);
+  // edf_get_end_trial_identifier()
+  // Rprintf("trial id is %i", id );
+  return(ret);
+}
+
+SEXP get_trial_id(SEXP filename)
+{
+
+  int check(0);
+
+  EDFFILE* ef = edf_open_file( as_string(filename), 0, 1, 0, &check);
+  int ntrials = edf_get_trial_count(ef);
+  char* tstart = edf_get_start_trial_identifier(ef);
+  char* tend = edf_get_start_trial_identifier(ef);
+
+
+  edf_set_trial_identifier(ef,tstart,tend);
+
+  TRIAL* tr = new TRIAL;
+  RECORDINGS* data = new RECORDINGS[ntrials];
+  for(int i=1; i<=ntrials; i++)
+  {
+    edf_goto_next_trial(ef);
+
+    int t = edf_get_trial_header(ef,tr);
+    data=tr->rec;
+
+    Rprintf("Trial %i: start: %i\n",i,tr->endtime);
+  }
+
+  Rprintf("start message is %s\n", tstart);
+  Rprintf("end message is %s\n", tend);
+
+
+  edf_close_file(ef);
+  SEXP ans;
+  ans = mkString(tstart);
+
+  return(ans);
+}
+
 
 
 }

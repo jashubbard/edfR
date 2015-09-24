@@ -35,6 +35,22 @@ edf.all <- function(EDFfile,samples=FALSE)
 
 }
 
+edf.trialcount <- function(EDFfile)
+{
+  EDFfile <- path.expand((EDFfile))
+  count <- .Call("get_trial_count",EDFfile)
+  count
+
+}
+
+
+edf.trialid <- function(EDFfile)
+{
+  EDFfile <- path.expand((EDFfile))
+  count <- .Call("get_trial_id",EDFfile)
+  count
+
+}
 
 edf.samples <- function(EDFfile, fields=c("time","flags","gxL","gyL","paL","gxR","gyR","paR"))
 {
