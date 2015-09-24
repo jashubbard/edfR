@@ -88,7 +88,6 @@ SEXP get_recordings(SEXP filename, SEXP fields)
 		for(int type = edf_get_next_data(ef); type != NO_PENDING_ITEMS; type = edf_get_next_data(ef))
 			if (type==RECORDING_INFO)
 				data[i++] = edf_get_float_data(ef)->rec;
-
 		SEXP ans;
 		int nx(i), ny(LENGTH(fields));
 		PROTECT(ans = allocMatrix(REALSXP, nx, ny));
@@ -215,32 +214,112 @@ SEXP get_trial_id(SEXP filename)
   char* tend = edf_get_start_trial_identifier(ef);
 
 
-  edf_set_trial_identifier(ef,tstart,tend);
+  edf_set_trial_identifier(ef, "TRIALID", "TRIAL OK");
 
-  TRIAL* tr = new TRIAL;
-  RECORDINGS* data = new RECORDINGS[ntrials];
-  for(int i=1; i<=ntrials; i++)
+  // loop through trials
+
+
+TRIAL* Header =new TRIAL;
+
+RECORDINGS* data = new RECORDINGS[ntrials];
+
+for(int iTrial=0; iTrial<ntrials; iTrial++)
+{
+
+  // navigating to the current trial
+  int JumpResults= edf_jump_to_trial(ef, iTrial);
+
+  // obtaining its header
+  int GoodJump= edf_get_trial_header(ef, Header);
+  //   mxSetFieldByNumber(mexTrials, iTrial, 0, ExportEDFInfo(Header));
+
+  // clearing arrays
+  //   SamplesClass.Reset();
+  //   Events.clear();
+
+  // samples/events data holders
+  ALLF_DATA* CurrentData;
+  int DataType;
+
+  // getting data
+  bool TrialIsOver= false;
+  UINT32 CurrentTime;
+  for(DataType= edf_get_next_data(ef); DataType!=NO_PENDING_ITEMS && !TrialIsOver; DataType= edf_get_next_data(ef))
   {
-    edf_goto_next_trial(ef);
+    // obtaining actual data
+    CurrentData= edf_get_float_data(ef);
+    switch(DataType)
+    {
+    case SAMPLE_TYPE:
+      CurrentTime= CurrentData->fs.time;
+      // AppendSample(CurrentData->fs);
+      break;
+    case STARTPARSE:
+    case ENDPARSE:
+    case BREAKPARSE:
+    case STARTBLINK :
+    case ENDBLINK:
+    case STARTSACC:
+    case ENDSACC:
+    case STARTFIX:
+    case ENDFIX:
+    case FIXUPDATE:
+    case MESSAGEEVENT:
+    case STARTSAMPLES:
+    case ENDSAMPLES:
+    case STARTEVENTS:
+    case ENDEVENTS:
+      CurrentTime= CurrentData->fe.sttime;
+      if (CurrentTime>Header->endtime)
+      {
+        TrialIsOver= true;
+        break;
+      }
+      // AppendEvent(CurrentData->fe);
+      break;
+    case BUTTONEVENT:
+    case INPUTEVENT:
+    case LOST_DATA_EVENT:
+      CurrentTime= CurrentData->fe.sttime;
+      if (CurrentTime>Header->endtime)
+      {
+        TrialIsOver= true;
+        break;
+      }
+      // AppendEvent(CurrentData->fe);
+      break;
+    case RECORDING_INFO:
+      CurrentTime= CurrentData->fe.time;
+      //AppendRecordingInfo(CurrentData->rec);
+      data[iTrial] = CurrentData->rec;
+      break;
+    default:
+      CurrentTime= CurrentData->fe.time;
+    }
 
-    int t = edf_get_trial_header(ef,tr);
-    data=tr->rec;
+    //mexPrintf("%d\n", CurrentTime);
 
-    Rprintf("Trial %i: start: %i\n",i,tr->endtime);
+    // end of trial check
+    if (CurrentTime>Header->endtime)
+      break;
   }
+}
 
-  Rprintf("start message is %s\n", tstart);
-  Rprintf("end message is %s\n", tend);
+SEXP ans;
+int nx(ntrials), ny(9);
+PROTECT(ans = allocMatrix(REALSXP, nx, ny));
+double* rans = REAL(ans);
 
+
+UNPROTECT(1);
+delete[] data;
 
   edf_close_file(ef);
-  SEXP ans;
-  ans = mkString(tstart);
+//   SEXP ans;
+//   ans = mkString(tstart);
 
   return(ans);
 }
 
 
-
 }
-
