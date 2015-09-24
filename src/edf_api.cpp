@@ -194,131 +194,251 @@ SEXP get_trial_count(SEXP filename)
     int check(0);
 
     EDFFILE* ef = edf_open_file( as_string(filename), 0, 1, 0, &check);
-    int id = edf_get_trial_count(ef);
+    int count = edf_get_trial_count(ef);
     edf_close_file(ef);
-    SEXP ret;
-    ret = ScalarInteger(id);
-  // edf_get_end_trial_identifier()
-  // Rprintf("trial id is %i", id );
-  return(ret);
+    SEXP ans = ScalarInteger(count);
+
+    return(ans);
 }
 
-SEXP get_trial_id(SEXP filename)
+SEXP get_trial_id(SEXP filename,SEXP evtfields,SEXP sampfields,SEXP getsamples)
 {
 
   int check(0);
 
-  EDFFILE* ef = edf_open_file( as_string(filename), 0, 1, 0, &check);
-  int ntrials = edf_get_trial_count(ef);
-  char* tstart = edf_get_start_trial_identifier(ef);
-  char* tend = edf_get_start_trial_identifier(ef);
+  EDFFILE* ef = edf_open_file( as_string(filename), 0, 1,asInteger(getsamples), &check);
 
+  int ntrials = edf_get_trial_count(ef);
+  int noelem = edf_get_element_count(ef);
+
+  Rprintf("Found %i trials\n",ntrials);
+
+  if (asLogical(getsamples))
+    Rprintf("Loading Events and Samples (%i)...\n",noelem);
+  else
+    Rprintf("Loading Events (%i)....\n",noelem);
 
   edf_set_trial_identifier(ef, "TRIALID", "TRIAL OK");
 
   // loop through trials
+  SEXP allevents, allsamp,trialtimes,allmsg,alldata;
+  PROTECT(allevents=allocVector(VECSXP,ntrials));
+  PROTECT(allmsg=allocVector(VECSXP,ntrials));
+  PROTECT(allsamp=allocVector(VECSXP,ntrials));
+  PROTECT(alldata=allocVector(VECSXP,4));
+  PROTECT(trialtimes=allocMatrix(VECSXP, ntrials,4));
 
+  SEXP ans;
+  TRIAL* Header = new TRIAL;
+  // RECORDINGS* recs = new RECORDINGS[ntrials];
 
-TRIAL* Header =new TRIAL;
-
-RECORDINGS* data = new RECORDINGS[ntrials];
-
-for(int iTrial=0; iTrial<ntrials; iTrial++)
-{
-
-  // navigating to the current trial
-  int JumpResults= edf_jump_to_trial(ef, iTrial);
-
-  // obtaining its header
-  int GoodJump= edf_get_trial_header(ef, Header);
-  //   mxSetFieldByNumber(mexTrials, iTrial, 0, ExportEDFInfo(Header));
-
-  // clearing arrays
-  //   SamplesClass.Reset();
-  //   Events.clear();
-
-  // samples/events data holders
-  ALLF_DATA* CurrentData;
-  int DataType;
-
-  // getting data
-  bool TrialIsOver= false;
-  UINT32 CurrentTime;
-  for(DataType= edf_get_next_data(ef); DataType!=NO_PENDING_ITEMS && !TrialIsOver; DataType= edf_get_next_data(ef))
+  for(int iTrial=0; iTrial<ntrials; iTrial++)
   {
-    // obtaining actual data
-    CurrentData= edf_get_float_data(ef);
-    switch(DataType)
+
+    // navigating to the current trial
+    int JumpResults= edf_jump_to_trial(ef, iTrial);
+
+    // obtaining its header
+    int GoodJump= edf_get_trial_header(ef, Header);
+    //   mxSetFieldByNumber(mexTrials, iTrial, 0, ExportEDFInfo(Header));
+
+    // clearing arrays
+    //   SamplesClass.Reset();
+    //   Events.clear();
+
+    //save recording times for all trials
+    SET_VECTOR_ELT(trialtimes, iTrial+ntrials*0,ScalarInteger(iTrial+1));
+    SET_VECTOR_ELT(trialtimes, iTrial+ntrials*1,ScalarInteger(Header->starttime));
+    SET_VECTOR_ELT(trialtimes, iTrial+ntrials*2,ScalarInteger(Header->endtime));
+    SET_VECTOR_ELT(trialtimes, iTrial+ntrials*3,ScalarInteger(Header->duration));
+
+    // samples/events data holders
+    ALLF_DATA* CurrentData;
+    int DataType;
+    UINT32 CurrentTime;
+    bool TrialIsOver= false;
+
+    //first we need to get the number of events, samples, and recordings for the trial
+    int nsamp(0),nevt(0),nrec(0);
+
+    for(DataType= edf_get_next_data(ef); DataType!=NO_PENDING_ITEMS && !TrialIsOver; DataType= edf_get_next_data(ef))
     {
-    case SAMPLE_TYPE:
-      CurrentTime= CurrentData->fs.time;
-      // AppendSample(CurrentData->fs);
-      break;
-    case STARTPARSE:
-    case ENDPARSE:
-    case BREAKPARSE:
-    case STARTBLINK :
-    case ENDBLINK:
-    case STARTSACC:
-    case ENDSACC:
-    case STARTFIX:
-    case ENDFIX:
-    case FIXUPDATE:
-    case MESSAGEEVENT:
-    case STARTSAMPLES:
-    case ENDSAMPLES:
-    case STARTEVENTS:
-    case ENDEVENTS:
-      CurrentTime= CurrentData->fe.sttime;
-      if (CurrentTime>Header->endtime)
+      CurrentData= edf_get_float_data(ef);
+      switch(DataType)
       {
-        TrialIsOver= true;
+      case SAMPLE_TYPE:
+        nsamp++;
         break;
-      }
-      // AppendEvent(CurrentData->fe);
-      break;
-    case BUTTONEVENT:
-    case INPUTEVENT:
-    case LOST_DATA_EVENT:
-      CurrentTime= CurrentData->fe.sttime;
-      if (CurrentTime>Header->endtime)
-      {
-        TrialIsOver= true;
+      case STARTPARSE:
+      case ENDPARSE:
+      case BREAKPARSE:
+      case STARTBLINK:
+      case ENDBLINK:
+      case STARTSACC:
+      case ENDSACC:
+      case STARTFIX:
+      case ENDFIX:
+      case FIXUPDATE:
+      case MESSAGEEVENT:
+      case STARTSAMPLES:
+      case ENDSAMPLES:
+      case STARTEVENTS:
+      case ENDEVENTS:
+        nevt++;
+        CurrentTime= CurrentData->fe.sttime;
+        if (CurrentTime>Header->endtime)
+        {
+          TrialIsOver= true;
+          break;
+        }
         break;
+      case LOST_DATA_EVENT:
+        CurrentTime= CurrentData->fe.sttime;
+        if (CurrentTime>Header->endtime)
+        {
+          TrialIsOver= true;
+          break;
+        }
+      case RECORDING_INFO:
+        nrec++;
       }
-      // AppendEvent(CurrentData->fe);
-      break;
-    case RECORDING_INFO:
-      CurrentTime= CurrentData->fe.time;
-      //AppendRecordingInfo(CurrentData->rec);
-      data[iTrial] = CurrentData->rec;
-      break;
-    default:
-      CurrentTime= CurrentData->fe.time;
+
     }
 
-    //mexPrintf("%d\n", CurrentTime);
+    // navigating back to the current trial
+    JumpResults= edf_jump_to_trial(ef, iTrial);
 
-    // end of trial check
-    if (CurrentTime>Header->endtime)
-      break;
+    // obtaining its header
+    GoodJump= edf_get_trial_header(ef, Header);
+
+    // getting data
+    FEVENT* tevents = new FEVENT[nevt];
+    FSAMPLE* tsamp = new FSAMPLE[nsamp];
+    char* CurrentMsg;
+    int ecount(0),rcount(0),scount(0);
+    DataType=NULL;
+    TrialIsOver=false;
+
+
+    SEXP tmsg;
+    PROTECT(tmsg=allocVector(VECSXP, nevt));
+
+    for(DataType= edf_get_next_data(ef); DataType!=NO_PENDING_ITEMS && !TrialIsOver; DataType= edf_get_next_data(ef))
+    {
+      // Rprintf("Trial %i\n",iTrial);
+      // obtaining actual data
+      CurrentData= edf_get_float_data(ef);
+      switch(DataType)
+      {
+      case SAMPLE_TYPE:
+        CurrentTime= CurrentData->fs.time;
+        tsamp[scount]=CurrentData->fs;
+        scount++;
+        // AppendSample(CurrentData->fs);
+        break;
+      case STARTPARSE:
+      case ENDPARSE:
+      case BREAKPARSE:
+      case STARTBLINK :
+      case ENDBLINK:
+      case STARTSACC:
+      case ENDSACC:
+      case STARTFIX:
+      case ENDFIX:
+      case FIXUPDATE:
+      case MESSAGEEVENT:
+      case STARTSAMPLES:
+      case ENDSAMPLES:
+      case STARTEVENTS:
+      case ENDEVENTS:
+        CurrentTime= CurrentData->fe.sttime;
+
+        if (CurrentTime>Header->endtime)
+        {
+          TrialIsOver= true;
+          break;
+        }
+
+        if (DataType==MESSAGEEVENT)
+          SET_VECTOR_ELT(tmsg,ecount,mkString(&(CurrentData->fe.message->c)));
+
+        tevents[ecount]=CurrentData->fe;
+        ecount++;
+
+        // AppendEvent(CurrentData->fe);
+
+        break;
+      case BUTTONEVENT:
+      case INPUTEVENT:
+      case LOST_DATA_EVENT:
+        CurrentTime= CurrentData->fe.sttime;
+        if (CurrentTime>Header->endtime)
+        {
+          TrialIsOver= true;
+          break;
+        }
+        // AppendEvent(CurrentData->fe);
+        break;
+      case RECORDING_INFO:
+        CurrentTime= CurrentData->fe.time;
+        //AppendRecordingInfo(CurrentData->rec);
+        // recs[iTrial] = CurrentData->rec;
+        break;
+        //     default:
+        //       CurrentTime= CurrentData->fe.time;
+      }
+
+      // Rprintf("%d\n", CurrentTime);
+
+      // end of trial check
+      if (CurrentTime>Header->endtime)
+        break;
+    }
+
+   //take events structure and turn into a matrix
+    int nx(nevt), ny(LENGTH(evtfields)+1);
+    SEXP events;
+    PROTECT(events = allocMatrix(REALSXP, nx, ny));
+    double* revents = REAL(events);
+    fill_events(evtfields,revents,nevt,tevents);
+
+    for(int i=0;i<nevt;i++)
+      revents[i+nevt*LENGTH(evtfields)]=iTrial+1;
+
+    //do the same for samples (if you get them)
+    if (asLogical(getsamples))
+    {
+      int nx(nsamp), ny(LENGTH(sampfields)+1);
+      SEXP samples;
+      PROTECT(samples = allocMatrix(REALSXP, nx, ny));
+      double* rsamples = REAL(samples);
+      fill_samples(sampfields,rsamples,nsamp,tsamp);
+
+      for(int i=0;i<nsamp;i++)
+        rsamples[i+nsamp*LENGTH(sampfields)]=iTrial+1;
+    UNPROTECT(1);
+    SET_VECTOR_ELT(allsamp,iTrial,samples);
+
+    }
+
+
+    SET_VECTOR_ELT(allevents,iTrial,events);
+    SET_VECTOR_ELT(allmsg,iTrial,tmsg);
+    UNPROTECT(2);
+
   }
-}
 
-SEXP ans;
-int nx(ntrials), ny(9);
-PROTECT(ans = allocMatrix(REALSXP, nx, ny));
-double* rans = REAL(ans);
-
-
-UNPROTECT(1);
-delete[] data;
+  SET_VECTOR_ELT(alldata,0,trialtimes);
+  SET_VECTOR_ELT(alldata,1,allevents);
+  SET_VECTOR_ELT(alldata,2,allmsg);
+  SET_VECTOR_ELT(alldata,3,allsamp);
 
   edf_close_file(ef);
-//   SEXP ans;
-//   ans = mkString(tstart);
 
-  return(ans);
+  UNPROTECT(5);
+  return(alldata);
+
+
 }
 
 

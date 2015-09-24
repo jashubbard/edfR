@@ -44,11 +44,63 @@ edf.trialcount <- function(EDFfile)
 }
 
 
-edf.trialid <- function(EDFfile)
+edf.trials <- function(EDFfile,samples=F)
 {
+  #getting trial-by-trial data (useful for merging with behavioral data)
   EDFfile <- path.expand((EDFfile))
-  count <- .Call("get_trial_id",EDFfile)
-  count
+  eventfields <- c("time", "type", "read", "eye", "sttime", "entime", "hstx", "hsty", "gstx", "gsty", "sta",
+    "henx", "heny", "genx", "geny", "ena", "havx", "havy", "gavx", "gavy", "ava", "avel",
+    "pvel", "svel", "evel", "supd_x", "eupd_x", "supd_y", "eupd_y", "status", "flags",
+    "input", "buttons", "parsedby");
+
+  samplefields <- c("time", "gxL","gyL","paL","gxR","gyR","paR")
+
+  output = list()
+
+  data <- .Call("get_trial_id",EDFfile,eventfields,samplefields,as.numeric(samples))
+  trialtimes <- data[[1]]
+  trialtimes <- apply(trialtimes,2,as.numeric)
+  trialtimes <- data.frame(trialtimes)
+  names(trialtimes) <- c('eyetrial','starttime','endtime','duration')
+
+  events <- as.data.frame(do.call(rbind,data[[2]]))
+  names(events) <- c(eventfields,'eyetrial')
+
+  fixes <- subset(events,type==8)[,c('eyetrial','sttime','entime','gavx','gavy')]
+  saccs <- subset(events,type==6)[,c('eyetrial','sttime','entime','gstx','gsty','genx','geny','avel','pvel')]
+  blinks <- subset(events,type==4)[,c('eyetrial','sttime','entime')]
+
+
+  messages <- data[[3]]
+  messages <- lapply(messages,as.character)
+  messages <- unlist(messages)
+  messages[messages=='NULL'] <- NA
+  events$message <- messages
+
+
+  if(samples)
+  {
+    samples <-as.data.frame(do.call(rbind,data[[4]]))
+    names(samples) <- c(samplefields,'eyetrial')
+    samples <- samples[c('eyetrial',samplefields)] #make trial the first variable
+  }
+else
+  samples <- NULL
+
+
+  output$header <- trialtimes
+  output$messages <- events[!is.na(events$message),c('eyetrial','sttime','message')]
+  output$samples <- samples
+  output$fixations <- fixes
+  output$saccades <- saccs
+  output$blinks <- blinks
+
+
+
+#   data <-do.call(rbind,data)
+#   data <- as.data.frame(data)
+#   names(data) <- eventfields
+  output
 
 }
 
