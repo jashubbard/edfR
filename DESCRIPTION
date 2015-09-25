@@ -1,14 +1,14 @@
 Package: edfR
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Basic functions for importing SR-Research Eyelink EDF files
 Version: 0.1
 Date: 2015-09-22
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Author: Jason Hubbard, Titus von der Malsburg
+Maintainer: Jason Hubbard <hubbard3@uoregon.edu>
+Description: Basic functions for importing events (fixations, saccades, blinks) and samples (pupil size) into R.
+License: GPL
 LazyData: TRUE
-Imports: 
+Imports:
     Rcpp (>= 0.12.1)
-LinkingTo: 
+LinkingTo:
     Rcpp
