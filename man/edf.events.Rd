@@ -17,7 +17,7 @@ edf.events(EDFfile, type, fields)
 }
 \details{
 \bold{type} may be:
-"STARTBLINK", "STARTSACC", "STARTFIX", "STARTSAMPLES", "STARTEVENTS", "STARTPARSE", "ENDBLINK", "ENDSACC", "ENDFIX", "ENDSAMPLES", "ENDEVENTS", "ENDPARSE", "FIXUPDATE", "BREAKPARSE", "BUTTONEVENT", "INPUTEVENT", "MESSAGEEVENT", "SAMPLE_TYPE", "RECORDING_INFO"
+"STARTBLINK", "STARTSACC", "STARTFIX", "STARTSAMPLES", "STARTEVENTS", "STARTPARSE", "ENDBLINK", "ENDSACC", "ENDFIX", "ENDSAMPLES", "ENDEVENTS", "ENDPARSE", "FIXUPDATE", "BREAKPARSE", "BUTTONEVENT", "INPUTEVENT", "MESSAGEEVENT", "SAMPLE_TYPE", "RECORDING_INFO" (default=ENDFIX.)
 
 \bold{fields} may be:
 \itemize{
@@ -46,6 +46,7 @@ edf.events(EDFfile, type, fields)
 \item{"input"}
 \item{"buttons"}
 \item{"parsedby": 7 bits of flags: PARSEDBY codes}
+\item{default is c("sttime","entime","gavx","gavy")}
 }
 Specification of the field values are copied from the EDF Access C API user manual.
 }
@@ -58,12 +59,13 @@ a dataframe containing the specified fields of the events of a given type.
 %\seealso{}
 \examples{
 \dontrun{
-edf.events("example.EDF", 
-	"STARTFIX", 
-	c("sttime","eye","gstx","gsty"))
 
-edf.events(EDFfile="example.EDF", 
-	type=c("STARTFIX","ENDFIX"),
-	fields=c("sttime","entime","eye","gstx","gsty"))
+#this returns the start, end, (average) x coordinates, and (average) y coordinates of fixations:
+edf.events('example.EDF')
+
+#this gets the relevant information for saccades
+events <- edf.events("example.EDF",type='ENDSACC',
+            fields=c('sttime','entime','gstx','gsty','genx','geny','avel','pvel'))
+
 }}
 %\keyword{}
