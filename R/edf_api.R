@@ -267,3 +267,18 @@ edf.messages.c <- function(EDFfile)
   # in the C++ part simply because it's easier to do in R.
   data[data$time!=-1,,drop=F]
 }
+
+
+blinkmask <- function(EDFfile)
+{
+
+  events <- edf.events(EDFfile,c('ENDBLINK','ENDSACC'),c('sttime','entime','type'))
+
+  events <- events[order(events$entime),]
+
+  isblink<- findRealBlinks(events$sttime,events$entime,events$type)
+  isblink
+  # cbind(events,isblink)
+
+
+}

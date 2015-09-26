@@ -48,7 +48,7 @@
 
 #ifndef __SR_RESEARCH_EDF_H__
 #define __SR_RESEARCH_EDF_H__
-#include "edfapi/edf_data.h"
+#include "edf_data.h"
 
 
 /***********************************************************************

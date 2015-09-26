@@ -15,27 +15,5 @@ using namespace Rcpp;
 //   http://gallery.rcpp.org/
 //
 
-// [[Rcpp::export]]
-List rcpp_hello() {
-  CharacterVector x = CharacterVector::create("foo", "bar");
-  NumericVector y   = NumericVector::create(0.0, 1.0);
-  List z            = List::create(x, y);
-  return z;
-}
-
-
-// [[Rcpp::export]]
-int timesTwo(int x) {
-  int y = x*2;
-
-  return y;
-
-}
-
-// [[Rcpp::export]]
-int edfTest(char filename){
-   int x=5;
-   return x;
- }
 
 

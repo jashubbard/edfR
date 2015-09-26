@@ -1,1 +1,5 @@
 PKG_LIBS=-framework edfapi -F/Library/Frameworks/
+
+#this is supposed to make things portable, but doesn't work
+# -install_name @rpath/edf_mac/edfapi.framework/Versions/A/edfapi
+
