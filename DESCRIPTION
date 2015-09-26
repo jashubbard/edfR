@@ -9,6 +9,7 @@ Description: Basic functions for importing events (fixations, saccades, blinks) 
 License: GPL
 LazyData: TRUE
 Imports:
-    Rcpp (>= 0.12.1)
+    Rcpp (>= 0.12.1), RcppArmadillo (>= 0.4.200.0)
 LinkingTo:
-    Rcpp
+    Rcpp, RcppArmadillo
+Depends: RcppArmadillo

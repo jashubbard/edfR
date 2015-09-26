@@ -9,7 +9,23 @@ findRealBlinks <- function(starttimes, endtimes, types) {
     .Call('edfR_findRealBlinks', PACKAGE = 'edfR', starttimes, endtimes, types)
 }
 
+events2samples <- function(starttimes, endtimes, vals) {
+    .Call('edfR_events2samples', PACKAGE = 'edfR', starttimes, endtimes, vals)
+}
+
 expandrange <- function(starttimes, endtimes, evt) {
     .Call('edfR_expandrange', PACKAGE = 'edfR', starttimes, endtimes, evt)
+}
+
+matrixSubset <- function(M, val) {
+    .Call('edfR_matrixSubset', PACKAGE = 'edfR', M, val)
+}
+
+matrixFind <- function(M, val) {
+    .Call('edfR_matrixFind', PACKAGE = 'edfR', M, val)
+}
+
+vectorFind <- function(M, val) {
+    .Call('edfR_vectorFind', PACKAGE = 'edfR', M, val)
 }
 
