@@ -5,27 +5,6 @@
 
 using namespace Rcpp;
 
-// This is a simple function using Rcpp that creates an R list
-// containing a character vector and a numeric vector.
-//
-// Learn more about how to use Rcpp at:
-//
-// http://www.rcpp.org/
-//   http://adv-r.had.co.nz/Rcpp.html
-//
-// and browse examples of code using Rcpp at:
-
-//   http://gallery.rcpp.org/
-//
-
-
-List rcpp_hello() {
-  CharacterVector x = CharacterVector::create("foo", "bar");
-  NumericVector y   = NumericVector::create(0.0, 1.0);
-  List z            = List::create(x, y);
-  return z;
-}
-
 
 // [[Rcpp::export]]
 IntegerVector findInterval2(NumericVector x, NumericVector breaks) {
@@ -47,8 +26,7 @@ IntegerVector findInterval2(NumericVector x, NumericVector breaks) {
 
 // [[Rcpp::export]]
 DataFrame findRealBlinks(NumericVector starttimes,NumericVector endtimes, NumericVector types) {
-
-
+  // given saccade and blink events, code the saccades immediately before and after blinks as blinks
   int n = types.size();
   NumericVector out(types.size()); //binary vector indicating whether it should be counted as a blink
 
@@ -65,52 +43,28 @@ DataFrame findRealBlinks(NumericVector starttimes,NumericVector endtimes, Numeri
       out[i]=1;
   }
 
-
-//   double mintime = min(starttimes);
-//   NumericVector start_adj = starttimes - mintime;
-//   NumericVector end_adj = endtimes - mintime;
-//
-//   // here's how we print out a vector via C++
-//   // Rcpp::Rcout << "end_adj is " << std::endl << end_adj << std::endl;
-//
-//
-//
-//   std::vector<int> myvector(int(end_adj[end_adj.size()-1]),0);
-//
-//   for(int i=1; i<n;i++)
-//   {
-//
-//     if(out[i]==1)
-//       std::fill(myvector.begin()+start_adj[i],myvector.begin()+end_adj[i],1);
-//   }
-//
-//   int sum_of_elems =std::accumulate(myvector.begin(),myvector.end(),0);//#include <numeric>
-//
-//   std::vector<int>::iterator iter = myvector.begin();
-//   std::vector<int> newtimes(myvector.size());
-//   std::iota(newtimes.begin(), newtimes.end(), mintime);
-//
-
   return DataFrame::create(_["sttime"]= starttimes, _["entime"]= endtimes,_["type"]=types,_["blink"]=out);
 }
 
 // [[Rcpp::export]]
 arma::mat events2samples(NumericVector starttimes, NumericVector endtimes,NumericVector vals)
 {
+  // take event data with starting and ending times and convert to long format (i.e., sample-by-sample)
 
+  // convert to Armadillo vectors
   arma::vec st=arma::vec(starttimes);
   arma::vec en=arma::vec(endtimes);
   arma::vec val=arma::vec(vals);
 
+  // adjust the raw time to relative time from first sample
   double mintime = min(st);
-
   arma::vec st_adj = st - mintime;
   arma::vec en_adj = en - mintime;
 
   //make a blank vector that's as big as the maximum number of samples
   arma::mat newsamp = arma::mat(max(en_adj),4,arma::fill::none);
 
-  //fill first column with the sample number (adjusted to raw time)
+  //fill first column with the sample number (adjusted back to raw time)
   arma::vec sampnum = arma::linspace(0, max(en_adj)-1,max(en_adj));
   newsamp(arma::span::all,0) = sampnum + mintime;
 
@@ -126,8 +80,9 @@ arma::mat events2samples(NumericVector starttimes, NumericVector endtimes,Numeri
     idx1=st_adj(i);
     idx2=en_adj(i);
 
-    //create a vector that is big enough for start:end sample
+    //create a vector that is big enough for start to end sample
     fillsize = idx2-idx1+1;
+    // Rprintf("fillsize=%i\n",fillsize);
 
     //replicate the start time that many times
     st_fill =  arma::mat(fillsize,1,arma::fill::none);
@@ -159,58 +114,4 @@ arma::mat events2samples(NumericVector starttimes, NumericVector endtimes,Numeri
 
 }
 
-
-// [[Rcpp::export]]
-std::vector<int> expandrange(NumericVector starttimes,NumericVector endtimes, NumericVector evt)
-{
-
-  int n = evt.size();
-  double mintime = min(starttimes);
-  NumericVector start_adj = starttimes - mintime;
-  NumericVector end_adj = endtimes - mintime;
-
-
-
-  std::vector<int> myvector(int(end_adj[end_adj.size()-1]),0);
-
-  for(int i=1; i<n;i++)
-  {
-
-    if(evt[i]==1)
-      std::fill(myvector.begin()+start_adj[i],myvector.begin()+end_adj[i],1);
-  }
-
-  int sum_of_elems =std::accumulate(myvector.begin(),myvector.end(),0);//#include <numeric>
-
-  std::vector<int>::iterator iter = myvector.begin();
-  std::vector<int> newtimes(myvector.size());
-  std::iota(newtimes.begin(), newtimes.end(), mintime);
-
-  return(newtimes);
-
-}
-
-// [[Rcpp::export]]
-arma::mat matrixSubset(arma::mat M, int val) {
-  // logical conditionL where is transpose larger?
-  arma::umat a = M > val;
-  arma::mat  N = arma::conv_to<arma::mat>::from(a);
-  return N;
-}
-
-// [[Rcpp::export]]
-arma::vec matrixFind(arma::mat M, int val) {
-  arma::vec v = M.elem( arma::find( M >= val ) );
-  return v;
-}
-
-// [[Rcpp::export]]
-arma::vec vectorFind(arma::vec M, int val) {
-  arma::uvec v = arma::find( M >= val );
-
-  // change elements of M greater than 0.5 to 1
-  M.elem( find(M > 0.5) ).ones();
-
-  return M;
-}
 

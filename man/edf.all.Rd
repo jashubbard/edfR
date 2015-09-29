@@ -4,12 +4,14 @@
 \alias{edf.all}
 \title{Load all data from EDF file}
 \usage{
-edf.all(EDFfile, samples = FALSE)
+edf.all(EDFfile, samples = FALSE, eventmask = FALSE)
 }
 \arguments{
 \item{EDFfile}{path to an EDF file}
 
 \item{samples}{logical indicating whether to import samples (default=FALSE)}
+
+\item{eventmask}{logical indicating whether to add an \code{\link{eventmask}} to samples (default=FALSE)}
 }
 \value{
 The output will be a list with 4 named elements (fixations, saccades, blinks, and samples)

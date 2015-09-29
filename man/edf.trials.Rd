@@ -4,12 +4,17 @@
 \alias{edf.trials}
 \title{Load trial-based data from an EDF file}
 \usage{
-edf.trials(EDFfile, samples = F)
+edf.trials(EDFfile, samples = FALSE, eventmask = FALSE,
+  event.fields = c("time", "type", "read", "eye", "sttime", "entime", "gstx",
+  "gsty", "genx", "geny", "gavx", "gavy", "avel", "pvel"),
+  sample.fields = c("time", "eye", "gxL", "gyL", "paL", "gxR", "gyR", "paR"))
 }
 \arguments{
 \item{EDFfile}{path to an EDF file}
 
 \item{samples}{logical indicating whether to import samples (default=FALSE)}
+
+\item{eventmask}{logical indicating whether to add an \code{\link{eventmask}} to samples (default=FALSE)}
 }
 \value{
 The output will be a list with 5 named elements (headers,fixations, saccades, blinks, and samples)

@@ -37,6 +37,7 @@ all events/samples to facilitate merging with behavioral data
 
 \itemize{
 \item \code{\link{edf.trialcount}} quickly returns the number of trials in a named EDF file with little overhead
+\item \code{\link{eventmask}} internal function. adds event-relevant binary variables to sample data.
 }
 }
 \author{

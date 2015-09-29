@@ -12,6 +12,8 @@ edf.samples(EDFfile, fields)
     name of the EDFfile to load.}
   \item{fields}{a character string array giving the
     names of the fields to load.}
+  \item{eventmask}{logical indicating whether to add
+    an \code{\link{eventmask}} to the samples}
 }
 \details{
 \bold{fields} may be:
@@ -40,7 +42,7 @@ a dataframe containing the specified fields of the samples.
 %\seealso{}
 \examples{
 \dontrun{
-edf.samples("example.EDF", 
+edf.samples("example.EDF",
 	c("time","gxL","gyL","paL","gxR","gyR","paR"))
 
 edf.samples(EDFfile="example.EDF",

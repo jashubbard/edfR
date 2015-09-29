@@ -19,6 +19,7 @@ edf.preamble <- function(EDFfile)
 #'
 #' @param EDFfile path to an EDF file
 #' @param samples logical indicating whether to import samples (default=FALSE)
+#' @param eventmask logical indicating whether to add an \code{\link{eventmask}} to samples (default=FALSE)
 #'
 #' @return The output will be a list with 4 named elements (fixations, saccades, blinks, and samples)
 #' each element being a data frame
@@ -33,7 +34,7 @@ edf.preamble <- function(EDFfile)
 #'
 #' }
 #'
-edf.all <- function(EDFfile,samples=FALSE)
+edf.all <- function(EDFfile,samples=FALSE,eventmask=FALSE)
 {
   # holder for data
   data <- list()
@@ -43,7 +44,7 @@ edf.all <- function(EDFfile,samples=FALSE)
   # get samples if we ask for them (otherwise it's too slow)
   if(samples){
 
-    samp <- edf.samples(EDFfile)
+    samp <- edf.samples(EDFfile,eventmask=eventmask)
     data$samples <- samp
   }
 
@@ -63,37 +64,6 @@ edf.all <- function(EDFfile,samples=FALSE)
 
 }
 
-#' @title Determine trial number from an EDF file
-#'
-#' @description
-#' \code{edf.trialcount} simply returns the number of trials in a given EDF file.
-#'
-#
-#' @details
-#' \code{edf.trialcount} may be useful if one wants to quickly get the number of trials
-#' from an EDF with little overhead. Trials are defined by the starting and stopping of
-#' recording from the eyetracker. To obtain trial-by-trial data from the EDF, use
-#' \code{\link{edf.trials}}.
-#'
-#' @param EDFfile path to an EDF file
-#'
-#' @return The number of trials in the EDF
-#'
-#' @author Jason Hubbard, \email{hubbard3@@uoregon.edu}
-#'
-#' @examples
-#' \dontrun{
-#' output <- edf.trialcount('/path/to/file.edf')
-#' output
-#' 500
-#' }
-edf.trialcount <- function(EDFfile)
-{
-  EDFfile <- path.expand((EDFfile))
-  count <- .Call("get_trial_count",EDFfile)
-  count
-
-}
 
 #' @title Load trial-based data from an EDF file
 #'
@@ -113,6 +83,7 @@ edf.trialcount <- function(EDFfile)
 #'
 #' @param EDFfile path to an EDF file
 #' @param samples logical indicating whether to import samples (default=FALSE)
+#' @param eventmask logical indicating whether to add an \code{\link{eventmask}} to samples (default=FALSE)
 #'
 #' @return The output will be a list with 5 named elements (headers,fixations, saccades, blinks, and samples)
 #' each element being a data frame. Headers indicate the starting and stopping point for each trial. Each data
@@ -127,22 +98,18 @@ edf.trialcount <- function(EDFfile)
 #' output$saccades #another data frame
 #'
 #' }
-edf.trials <- function(EDFfile,samples=F)
+edf.trials <- function(EDFfile,samples=FALSE,eventmask=FALSE,
+                       event.fields=c("time", "type", "read", "eye", "sttime", "entime","gstx", "gsty",
+                                      "genx", "geny", "gavx", "gavy", "avel","pvel"),
+                       sample.fields= c("time","eye", "gxL","gyL","paL","gxR","gyR","paR"))
 {
   #getting trial-by-trial data (useful for merging with behavioral data)
   EDFfile <- path.expand((EDFfile))
 
-  #event fields we're interested in
-  eventfields <- c("time", "type", "read", "eye", "sttime", "entime","gstx", "gsty", "genx", "geny", "gavx", "gavy", "avel",
-                   "pvel");
-
-  # relevant sample fields
-  samplefields <- c("time", "gxL","gyL","paL","gxR","gyR","paR")
-
   # holder for our output
   output = list()
 
-  data <- .Call("get_trial_data",EDFfile,eventfields,samplefields,as.numeric(samples))
+  data <- .Call("get_trial_data",EDFfile,event.fields,sample.fields,as.numeric(samples))
 
   # grab headers, do some resahping to make a nice data frame
   headers <- data[[1]]
@@ -152,7 +119,7 @@ edf.trials <- function(EDFfile,samples=F)
 
   # do the same with events
   events <- as.data.frame(do.call(rbind,data[[2]]))
-  names(events) <- c(eventfields,'eyetrial')
+  names(events) <- c(event.fields,'eyetrial')
   # then subset for our fixations, saccades, and blinks (with relevant fields)
   fixes <- subset(events,type==8)[,c('eyetrial','sttime','entime','gavx','gavy')]
   saccs <- subset(events,type==6)[,c('eyetrial','sttime','entime','gstx','gsty','genx','geny','avel','pvel')]
@@ -170,8 +137,12 @@ edf.trials <- function(EDFfile,samples=F)
   {
     # grab samples if we ask for them, make into a data frame
     samples <-as.data.frame(do.call(rbind,data[[4]]))
-    names(samples) <- c(samplefields,'eyetrial')
-    samples <- samples[c('eyetrial',samplefields)] #make trial the first variable
+    names(samples) <- c(sample.fields,'eyetrial')
+    samples <- samples[c('eyetrial',sample.fields)] #make trial the first variable
+
+    if(eventmask)
+      samples <- eventmask(EDFfile,samples) #add our event mask if we ask for it
+
   }
   else
     samples <- NULL
@@ -188,7 +159,7 @@ edf.trials <- function(EDFfile,samples=F)
 
 }
 
-edf.samples <- function(EDFfile, fields=c("time","flags","gxL","gyL","paL","gxR","gyR","paR"))
+edf.samples <- function(EDFfile, fields=c("time","flags","gxL","gyL","paL","gxR","gyR","paR"), eventmask=F)
 {
   EDFfile <- path.expand((EDFfile))
   # Check fields:
@@ -209,6 +180,14 @@ edf.samples <- function(EDFfile, fields=c("time","flags","gxL","gyL","paL","gxR"
   data <- as.data.frame(data)
   colnames(data) <- fields
   data$time <- as.integer(data$time)
+
+  #tihs adds an "event mask". Binary vectors indicating whether fixation/saccade/blink occurred for each sample
+  if(eventmask)
+  {
+   data <- eventmask(EDFfile,data)
+  }
+
+
   data
 }
 
