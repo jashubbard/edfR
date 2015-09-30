@@ -1,0 +1,4 @@
+#!/bin/bash
+if [ -e "./src/Makevars.bak_CustomConfig" ]; then
+rm ./src/Makevars.bak_CustomConfig
+fi

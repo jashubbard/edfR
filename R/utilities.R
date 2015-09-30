@@ -123,13 +123,20 @@ eventmask <- function(EDFfile,samples=NULL)
 
 }
 
-edf.plot <- function(EDFfile,outfile=NULL,outlier.rm=F,res=NULL,flip=T,theme='black',crosshairs=T)
+edf.plot <- function(EDFfile=NULL,fixdata=NULL,outfile=NULL,outlier.rm=F,res=NULL,flip=T,theme='black',crosshairs=T,plot.title='')
 {
 
-EDFfile <- path.expand((EDFfile))
+# if we give an EDF file, import and get data
+if(!is.null(EDFfile) ){
+  EDFfile <- path.expand((EDFfile))
+  # get fixation data
+  fixdata <- edf.events(EDFfile,type = c('ENDFIX'),fields = c('gavx','gavy'))
+  # get just the edf file from the path
+  heading <- basename(f)
+}
+  else
+    heading=plot.title
 
-# get fixation data
-fixdata <- edf.events(EDFfile,type = c('ENDFIX'),fields = c('gavx','gavy'))
 
 x <- fixdata$gavx
 y <- fixdata$gavy
@@ -166,9 +173,7 @@ else
   if(flip)
     ylim = rev(ylim)
 
-  # get just the edf file from the path
-  splitf <- strsplit(EDFfile,.Platform$file.sep)
-  splitf <- splitf[[1]][length(splitf[[1]])]
+
 
   # if we're saving as a pdf
   if(!is.null(outfile))
@@ -208,7 +213,7 @@ else
        axes = F,
        ann = F)
 
-  title(main=splitf,
+  title(main=heading,
         xlab='x coord (pixels)',
         ylab='y coord (pixels)',
         col.lab=textcolor,col.main=textcolor)
@@ -353,3 +358,67 @@ else if(format=='long') {
 return(tmp3)
 
 }
+
+edf.batch <- function(EDFfiles=NULL,pattern=NULL,samples=FALSE,doplot=TRUE,save.files=FALSE,outdir=NULL,plot.theme='black',plot.res = NULL)
+{
+
+  allt <- list()
+
+  #if we give a directory and pattern, load all files from that directory
+  if(!is.null(pattern) && length(EDFfiles)==1)
+  {
+   edfs <- list.files(path=EDFfiles,pattern=pattern)
+   EDFfiles <- paste(EDFfiles,edfs,sep='')
+  }
+
+  for(f in seq_along(EDFfiles))
+  {
+    print(paste('Loading file:',path.expand(EDFfiles[[f]])))
+    # get a clean name from the edf files
+    justfile <- sub("^([^.]*).*", "\\1", basename(EDFfiles[[f]]))
+    ID <- as.numeric(gsub("([0-9]*).*","\\1",justfile))
+
+    #import
+    trials <- edf.trials(EDFfiles[[f]],samples=samples,eventmask=T)
+
+    #and ID and filename elements to the list
+    trials$ID <- ID
+    trials$filename <- EDFfiles[[f]]
+
+    #add a (numeric only) ID column to each data frame
+    trials$fixations$ID <- ID
+    trials$saccades$ID <- ID
+    trials$blinks$ID <- ID
+
+    #including samples if we imported them
+    if(!is.null(trials$samples))
+      trials$samples$ID <- ID
+
+    #save into overall list
+    allt[[f]] <- trials
+
+    if(doplot)
+      {
+      if(save.files)
+        outfile = file.path(outdir,paste(justfile,'.pdf',sep=''))
+      else
+        outfile=NULL
+
+      edf.plot(fixdata=trials$fixations,theme=plot.theme,outfile = outfile,plot.title=justfile,res=plot.res)
+    }
+
+    if(save.files)
+    {
+      outdata <- file.path(outdir,paste(justfile,'.RData',sep=''))
+      save(trials,file=outdata);
+    }
+
+
+    }
+
+  print("Done!")
+  return(allt)
+
+
+}
+
