@@ -79,7 +79,7 @@ eventmask <- function(EDFfile,samples=NULL)
   saccs <- subset(events,type==6)
 
   # eyelink records saccades immediately before and after blinks. Let's mark them as blinks
-  isblink<- findRealBlinks(events$sttime,events$entime,events$type)
+  isblink<- findRealBlinks(sacc_and_blinks$sttime,sacc_and_blinks$entime,sacc_and_blinks$type)
 
 
   # convert real blink events to samples
@@ -123,10 +123,12 @@ eventmask <- function(EDFfile,samples=NULL)
 
 }
 
-edf.plot <- function(EDFfile,outlier.rm=F,res=NULL,flip=T)
+edf.plot <- function(EDFfile,outfile=NULL,outlier.rm=F,res=NULL,flip=T,theme='black',crosshairs=T)
 {
+
 EDFfile <- path.expand((EDFfile))
 
+# get fixation data
 fixdata <- edf.events(EDFfile,type = c('ENDFIX'),fields = c('gavx','gavy'))
 
 x <- fixdata$gavx
@@ -137,49 +139,97 @@ if(outlier.rm){
   x.c <- scale(x,scale=T)
   y.c <- scale(y,scale=T)
 
-  #x outliers
-  x <- x[abs(x.c)<=3]
-  y <- y[abs(x.c)<=3]
+  #find complete coordinates that are not outliers
+  goodrows <- abs(x.c)<=3 & abs(y.c)<=3
+  x <- x[goodrows]
+  y <- y[goodrows]
 
-  #y outliers
-  x <- x[abs(y.c)<=3.5]
-  y <- y[abs(y.c)<=3.5]
   }
 
-  if(is.null(res)){
-   xlim = c(0,max(x))
-   ylim = c(0,max(y))}
-  else
+
+if(is.null(res)){
+  # if no resolution given
+  # round to nearest 50 pixels for the max x/y values
+  xmax <- 50*round(max(x)/50)
+  ymax <- 50*round(max(y)/50)
+
+  xlim = c(0,xmax)
+  ylim = c(0,ymax)}
+else
     {
+    # otherwise, zoom in to screen resolution
     xlim = c(0,res[1])
     ylim = c(0,res[2])
   }
 
+  # flip y axis, since screen origin is at upper-left
   if(flip)
     ylim = rev(ylim)
 
+  # get just the edf file from the path
   splitf <- strsplit(EDFfile,.Platform$file.sep)
   splitf <- splitf[[1]][length(splitf[[1]])]
 
-  par(bg='black')
+  # if we're saving as a pdf
+  if(!is.null(outfile))
+  {
+    # calculate width & height of PDF to preserve aspect ratio:
+    # (original height / original width) x new width = new height
+    w = 8 #let's make it 8 inches wide to fit on paper (it's vector graphics anyway)
+    h = (max(ylim)/max(xlim))*w
+
+    pdf(outfile,width=w,height=h)
+  }
+
+  # do we want yellow on black, or black on white?
+  if(theme=='black')
+    {bgcolor='black'
+    pointcolor=adjustcolor('yellow',alpha.f=0.7)
+    textcolor='white'
+  }
+  else if(theme=='white'){
+    bgcolor='white'
+    pointcolor=adjustcolor('black',alpha.f=0.7)
+    textcolor='black'
+
+  }
+
+  # do the actual plotting
+  par(bg=bgcolor)
 
   plot(x,y,
-       xlim=xlim,ylim=ylim,
-       pch=20,
+       xlim=xlim,
+       ylim=ylim,
+       pch=16,
        cex = 0.4,
-       col = adjustcolor('yellow',alpha.f=0.5))
+       col = pointcolor,
+       bg = pointcolor,
+       type = 'p',
+       axes = F,
+       ann = F)
 
   title(main=splitf,
         xlab='x coord (pixels)',
         ylab='y coord (pixels)',
-        col.lab='white',col.main='white')
-  xticks <- seq(0,xlim[2],100)
-  yticks <- seq(0,ylim[2],100)
+        col.lab=textcolor,col.main=textcolor)
 
-  axis(1,at=xticks,labels=xticks,col='white',col.axis='white',las=2)
-  axis(2, at=yticks,labels=yticks,col='white',col.axis="white",las=2)
-  box(col="white")
-  abline(v=median(xlim),h=median(ylim),col=adjustcolor('red',alpha.f=1),lty=2)
+  xticks <- seq(0,xlim[2],100)
+
+  if(flip)
+    yticks <- seq(ylim[1],0,-100)
+  else
+    yticks <- seq(0,ylim[2],100)
+
+  axis(1,at=xticks,labels=xticks,col=textcolor,col.axis=textcolor,las=2)
+  axis(2, at=yticks,labels=yticks,col=textcolor,col.axis=textcolor,las=2)
+  box(col=textcolor)
+
+  # crosshairs on the median x/y limits
+  if(crosshairs)
+    abline(v=median(xlim),h=median(ylim),col=adjustcolor('red',alpha.f=1),lty=2)
+
+  if(!is.null(outfile))
+   dev.off()
 
 }
 

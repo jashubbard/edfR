@@ -47,7 +47,7 @@ DataFrame findRealBlinks(NumericVector starttimes,NumericVector endtimes, Numeri
 }
 
 // [[Rcpp::export]]
-arma::mat events2samples(NumericVector starttimes, NumericVector endtimes,NumericVector vals)
+arma::mat events2samples(NumericVector starttimes, NumericVector endtimes, NumericVector vals)
 {
   // take event data with starting and ending times and convert to long format (i.e., sample-by-sample)
 
@@ -61,11 +61,11 @@ arma::mat events2samples(NumericVector starttimes, NumericVector endtimes,Numeri
   arma::vec st_adj = st - mintime;
   arma::vec en_adj = en - mintime;
 
-  //make a blank vector that's as big as the maximum number of samples
-  arma::mat newsamp = arma::mat(max(en_adj),4,arma::fill::none);
+  //make a blank vector that's as big as the maximum number of samples (plus some padding)
+  arma::mat newsamp = arma::mat(max(en_adj)+100,4,arma::fill::none);
 
   //fill first column with the sample number (adjusted back to raw time)
-  arma::vec sampnum = arma::linspace(0, max(en_adj)-1,max(en_adj));
+  arma::vec sampnum = arma::linspace(0, max(en_adj)+99,max(en_adj)+100);
   newsamp(arma::span::all,0) = sampnum + mintime;
 
   unsigned int idx1,idx2;
@@ -73,6 +73,7 @@ arma::mat events2samples(NumericVector starttimes, NumericVector endtimes,Numeri
   arma::mat val_fill,st_fill,en_fill;
 
   //for each event
+  // starttimes.size()-1
   for(int i=0; i<starttimes.size()-1; i++)
   {
 
@@ -80,9 +81,12 @@ arma::mat events2samples(NumericVector starttimes, NumericVector endtimes,Numeri
     idx1=st_adj(i);
     idx2=en_adj(i);
 
+
     //create a vector that is big enough for start to end sample
     fillsize = idx2-idx1+1;
-    // Rprintf("fillsize=%i\n",fillsize);
+
+    // Rprintf("idx1=%i, idx2=%i\n",idx1,idx2);
+
 
     //replicate the start time that many times
     st_fill =  arma::mat(fillsize,1,arma::fill::none);
