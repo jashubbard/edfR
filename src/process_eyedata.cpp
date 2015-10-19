@@ -1,28 +1,8 @@
-
 #include <algorithm>
 #include <RcppArmadillo.h>
 // [[Rcpp::depends(RcppArmadillo)]]
 
 using namespace Rcpp;
-
-
-// [[Rcpp::export]]
-IntegerVector findInterval2(NumericVector x, NumericVector breaks) {
-
-  // example function found online, might be useful later
-  IntegerVector out(x.size());
-
-  NumericVector::iterator it, pos;
-  IntegerVector::iterator out_it;
-
-  for(it = x.begin(), out_it = out.begin(); it != x.end();
-  ++it, ++out_it) {
-    pos = std::upper_bound(breaks.begin(), breaks.end(), *it);
-    *out_it = std::distance(breaks.begin(), pos);
-  }
-
-  return out;
-}
 
 // [[Rcpp::export]]
 DataFrame findRealBlinks(NumericVector starttimes,NumericVector endtimes, NumericVector types) {
@@ -119,3 +99,84 @@ arma::mat events2samples(NumericVector starttimes, NumericVector endtimes, Numer
 }
 
 
+arma::mat epoch_index(NumericVector timelock, int startepoch, int endepoch )
+{
+
+  //given a vector of start times and epoch start and end, generate a matrix of indices
+  //for selecting out epochs of data
+  unsigned int idx1,idx2;
+  int fillsize;
+
+  arma::mat epochs = arma::mat(timelock.size(),endepoch-startepoch);
+  arma::vec filler = arma::vec(endepoch-startepoch);
+
+  //for each event
+  // starttimes.size()-1
+  for(int i=0; i<timelock.size(); i++)
+  {
+
+    //get the starting and ending sample
+    idx1=timelock(i) + startepoch;
+    idx2=timelock(i) + endepoch;
+
+    //create a vector that is big enough for start to end sample
+    fillsize = idx2-idx1;
+    filler = arma::linspace<arma::vec>(idx1,idx2,fillsize);
+
+    epochs.row(i) = filler.t();
+
+  }
+
+  return(epochs);
+}
+
+// [[Rcpp::export]]
+arma::mat get_epochs(NumericVector eventtimes, NumericVector samptimes, NumericVector sampvals, int startepoch, int endepoch)
+{
+  //given event times and sample data, get epochs of the sample data relative to those events
+
+  // convert to Armadillo vectors
+  arma::vec stimes=arma::vec(samptimes);
+  arma::uvec times = arma::conv_to<arma::uvec>::from(stimes);
+  arma::vec vals=arma::vec(sampvals);
+
+  //get indices for each epoch, convert to integer matrix
+  arma::mat idx = epoch_index(eventtimes,startepoch,endepoch);
+  arma::imat epoch_idx = arma::conv_to<arma::imat>::from(idx);
+
+  int mintime = min(times);
+  times -= mintime; //so sample times are 0:numsamples
+  epoch_idx -= mintime; //likewise for the epoch indices
+
+ // we need a full vector for samples so we can index proper times
+ // the original will have gaps for when the tracker was paused.
+  arma::vec fullval = arma::vec(max(times)+1,1,arma::fill::zeros);
+  fullval.elem(times) = vals;
+
+  // covering cases where epochs extend before beginning or after the end of recording
+  arma::uvec tmp, tmp2;
+  tmp = find(epoch_idx < 0); //if the epoch extends before the start of recording
+  epoch_idx.elem(tmp) *= 0; //replicate the first index
+
+  tmp2 = find(epoch_idx > max(times)); //if it extends beyond the end of recording
+  arma::ivec endvec = arma::ivec(size(tmp2));
+  endvec.fill(max(times));
+  epoch_idx.elem(tmp2) = endvec; //replicate the last index
+
+
+  //start with a blank matrix that is events x epoch_size
+  arma::mat result = arma::mat(eventtimes.size(),endepoch - startepoch,arma::fill::none);
+  //our temporary variables as we loop
+  arma::uvec indices;
+  arma::vec temp;
+
+  for (int i=0; i<epoch_idx.n_rows; i++)
+  {
+    //loop through each epoch, grab indices from that row
+    indices = arma::conv_to<arma::uvec>::from(epoch_idx.row(i));
+    temp= fullval.elem(indices); //grab the corresponding sample data (this will be a column vector)
+    result.row(i) = temp.t(); //fill in result
+  }
+
+  return(result);
+}

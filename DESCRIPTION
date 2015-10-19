@@ -12,6 +12,8 @@ Imports:
     Rcpp (>= 0.12.1),
     RcppArmadillo (>= 0.4.200.0),
     data.table
+Suggests:
+    R.matlab
 LinkingTo:
     Rcpp, RcppArmadillo
 Depends: RcppArmadillo,
