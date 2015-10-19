@@ -11,7 +11,7 @@ combine.eyedata(batchdata, fields = c("fixations", "saccades", "blinks",
 \item{batchdata}{output from \code{\link{edf.batch}}}
 
 \item{fields}{character array of the particular fields you want to combine (default is c('fixations',
-'saccades','blinks','messages')). Using 'samples' will result in extremely large data frames (millions of rows per subject)}
+'saccades','blinks','messages')). Warning: combining samples will result in extremely large data frames (millions of rows per subject)}
 }
 \value{
 a list with each of the requested fields. Each one is a data frame with all subjects' data. Subjects will

@@ -39,6 +39,7 @@ all events/samples to facilitate merging with behavioral data
 
 \itemize{
 \item \code{\link{edf.batch}} batch import many edf files and save files for R or Matlab
+\item \code{\link{combine.eyedata}} take the result of edf.batch and combine into data frames for entire group
 \item \code{\link{edf.plot}} quickly create a fixation plot from an EDF file
 \item \code{\link{epoch.samples}} take sample data and create epochs relative to a time-locking event
 \item \code{\link{edf.trialcount}} quickly returns the number of trials in a named EDF file with little overhead
