@@ -206,6 +206,7 @@ extern "C" {
     int check(0);
     EDFFILE* ef = edf_open_file( as_string(filename), 0, 1,asInteger(getsamples), &check);
 
+
     // output the number of trials and elements
     int ntrials = edf_get_trial_count(ef);
     int noelem = edf_get_element_count(ef);

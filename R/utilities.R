@@ -381,6 +381,7 @@ edf.batch <- function(EDFfiles=NULL,pattern=NULL,samples=FALSE,do.plot=TRUE,save
     trials$saccades$ID <- ID
     trials$blinks$ID <- ID
     trials$messages$ID <- ID
+    trials$header$ID <- ID
 
     #including samples if we imported them
     if(!is.null(trials$samples))
@@ -433,7 +434,7 @@ edf.batch <- function(EDFfiles=NULL,pattern=NULL,samples=FALSE,do.plot=TRUE,save
 
     }
 
-  print("Done with batch!")
+  print("Done processing all files!")
   return(allt)
 }
 
@@ -556,7 +557,7 @@ epoch.samples <- function(timelock,samples,sample.field='paL',epoch = c(-100,100
 #'
 #' }
 #'
-combine.eyedata <- function(batchdata,fields=c('fixations','saccades','blinks','messages'))
+combine.eyedata <- function(batchdata,fields=c('fixations','saccades','blinks','messages','header'))
 {
   output <- list()
 
