@@ -94,7 +94,7 @@ eventmask <- function(EDFfile,samples=NULL)
   colnames(fixsamp) <- c('time','sttime','entime','fixation')
   fixsamp <- data.table::data.table(fixsamp,key='time')
   fixsamp <- subset(fixsamp,select=c('time','fixation'))
-  fixsamp[fixsamp$fixation==8] <- 1
+  fixsamp$fixation[fixsamp$fixation==8] <- 1
 
 
   # convert saccades to samples
@@ -102,7 +102,7 @@ eventmask <- function(EDFfile,samples=NULL)
   colnames(saccsamp) <- c('time','sttime','entime','saccade')
   saccsamp <- data.table::data.table(saccsamp,key='time')
   saccsamp <- subset(saccsamp,select=c('time','saccade'))
-  saccsamp[saccsamp$saccade==6] <- 1
+  saccsamp$saccade[saccsamp$saccade==6] <- 1
 
 
   if(is.null(samples))
