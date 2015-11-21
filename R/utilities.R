@@ -47,6 +47,7 @@ edf.trialcount <- function(EDFfile)
 #'
 #' @param EDFfile path to an EDF file
 #' @param samples a data frame of sample data, resulting from \code{\link{edf.samples}}
+#' @param trials (optional). Output from \code{\link{edf.trials}}. Provide this instead of the EDFfile and samples
 #'
 #' @return A data frame of the same sample data, with the variables \code{fixation}, \code{saccade}, and \code{blink} added
 #' to the end.
@@ -68,15 +69,29 @@ edf.trialcount <- function(EDFfile)
 #'
 #' }
 #'
-eventmask <- function(EDFfile,samples=NULL)
+eventmask <- function(EDFfile=NULL,samples=NULL,trials=NULL)
 {
-  events <- edf.events(EDFfile,c('ENDBLINK','ENDSACC','ENDFIX'),c('sttime','entime','type'))
 
  # import all events, then break up into blinks (plus saccades), saccades only, and fixations only
+
+  if(!is.null(EDFfile) && is.null(trials)){
+  events <- edf.events(EDFfile,c('ENDBLINK','ENDSACC','ENDFIX'),c('sttime','entime','type'))
   events <- events[order(events$entime),]
   sacc_and_blinks <- subset(events,type==4 | type==6)
   fixes <- subset(events,type==8)
   saccs <- subset(events,type==6)
+  }
+  else if(!is.null(trials)){
+      trials$fixations$type <- 8
+      trials$saccades$type <- 6
+      trials$blinks$type <- 4
+
+      sacc_and_blinks <- rbind(subset(trials$saccades,select=c('sttime','entime','type')),subset(trials$blinks,select=c('sttime','entime','type')))
+      sacc_and_blinks <- sacc_and_blinks[order(sacc_and_blinks$entime),]
+
+      fixes <- trials$fixations
+      saccs <- trials$saccades
+  }
 
   # eyelink records saccades immediately before and after blinks. Let's mark them as blinks
   isblink<- findRealBlinks(sacc_and_blinks$sttime,sacc_and_blinks$entime,sacc_and_blinks$type)
@@ -93,32 +108,33 @@ eventmask <- function(EDFfile,samples=NULL)
   fixsamp <- events2samples(fixes$sttime, fixes$entime, fixes$type)
   colnames(fixsamp) <- c('time','sttime','entime','fixation')
   fixsamp <- data.table::data.table(fixsamp,key='time')
-  fixsamp <- subset(fixsamp,select=c('time','fixation'))
-  fixsamp$fixation[fixsamp$fixation==8] <- 1
-
+  fixsamp[,c('sttime','entime') :=NULL]
+  fixsamp[fixation==8,fixation := 1] #wherever fixation==8, recode to 1 (in place, no copying)
 
   # convert saccades to samples
   saccsamp <- events2samples(saccs$sttime, saccs$entime, saccs$type)
   colnames(saccsamp) <- c('time','sttime','entime','saccade')
   saccsamp <- data.table::data.table(saccsamp,key='time')
-  saccsamp <- subset(saccsamp,select=c('time','saccade'))
-  saccsamp$saccade[saccsamp$saccade==6] <- 1
+  saccsamp[,c('sttime','entime') :=NULL]
+  saccsamp[saccade==6,saccade := 1] #wherever saccade==6, recode to 1 (in place, no copying)
 
 
-  if(is.null(samples))
+  if(is.null(samples) && is.null(trials))
     samples <- edf.samples(f)
-
-  samples <- data.table::data.table(samples,key='time')
+  else if(is.null(samples) && !is.null(trials))
+    samples <- data.table::data.table(trials$samples)
+  else
+    samples <- data.table::data.table(samples,key='time')
 
   # merge everything together
   newsamp <- merge(samples,blinksamp,by='time',all.x=T)
   newsamp <- merge(newsamp,fixsamp,by='time',all.x=T)
   newsamp <- merge(newsamp,saccsamp,by='time',all.x=T)
-  newsamp$blink[is.na(newsamp$blink)] <- 0
-  newsamp$fixation[is.na(newsamp$fixation)] <- 0
-  newsamp$saccade[is.na(newsamp$saccade)] <- 0
+  newsamp[is.na(blink),blink := 0]
+  newsamp[is.na(fixation),fixation := 0]
+  newsamp[is.na(saccade),saccade := 0]
 
-  return(data.frame(newsamp))
+  return(newsamp)
 
 
 }

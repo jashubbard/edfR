@@ -5,7 +5,7 @@
 \title{Combine the results from edf.batch}
 \usage{
 combine.eyedata(batchdata, fields = c("fixations", "saccades", "blinks",
-  "messages"))
+  "messages", "header"))
 }
 \arguments{
 \item{batchdata}{output from \code{\link{edf.batch}}}

@@ -211,12 +211,11 @@ extern "C" {
     int ntrials = edf_get_trial_count(ef);
     int noelem = edf_get_element_count(ef);
 
-    Rprintf("Found %i trials\n",ntrials);
 
     if (asLogical(getsamples))
-      Rprintf("Loading Events and Samples (%i)...\n",noelem);
+      Rprintf("Loading Events and Samples (%i elements across %i trials)...\n",noelem,ntrials);
     else
-      Rprintf("Loading Events (%i)....\n",noelem);
+      Rprintf("Loading Events (%i events across %i trials)....\n",noelem,ntrials);
 
     // set the trial identifier (these are the defaults)
     edf_set_trial_identifier(ef, "TRIALID", "TRIAL OK");
@@ -450,4 +449,103 @@ extern "C" {
   }
 
 
+  SEXP get_samples_trialwise(SEXP filename, SEXP fields, SEXP trials)
+  {
+    int check(0);
+
+    EDFFILE* ef = edf_open_file( as_string(filename), 0, 0, 1, &check);
+
+    if(ef)
+    {
+      int noelem = edf_get_element_count(ef);
+      // output the number of trials and elements
+      int ntrials = edf_get_trial_count(ef);
+
+      // set the trial identifier (these are the defaults)
+      edf_set_trial_identifier(ef,"TRIALID","TRIAL OK");
+
+      SEXP eyetrial = PROTECT(allocVector(INTSXP,noelem));
+
+#ifdef EDFDEBUG
+
+      Rprintf("Loading Samples (%i samples across %i trials) ...\n",noelem,ntrials);
+#endif
+
+      FSAMPLE* data = new FSAMPLE[noelem];
+
+      // Trial header
+      TRIAL* Header = new TRIAL;
+      int sampcount(0);
+
+      for(int iTrial=0; iTrial<ntrials; iTrial++)
+      {
+
+        // navigating to the current trial
+        int JumpResults= edf_jump_to_trial(ef, iTrial);
+
+        // obtaining its header
+        int GoodJump= edf_get_trial_header(ef, Header);
+
+        // samples/events data holders
+        ALLF_DATA* CurrentData;
+        UINT32 CurrentTime;
+        bool TrialIsOver= false;
+
+        for(int type = edf_get_next_data(ef); type != NO_PENDING_ITEMS && !TrialIsOver; type = edf_get_next_data(ef))
+        {
+
+          // obtaining actual data
+          CurrentData= edf_get_float_data(ef);
+          switch(type)
+          {
+          case SAMPLE_TYPE:
+            CurrentTime= CurrentData->fs.time;
+            data[sampcount] = CurrentData->fs;
+            INTEGER(eyetrial)[sampcount] =iTrial+1;
+            sampcount++;
+
+            break;
+          default:
+            CurrentTime = CurrentData->fe.time;
+          }
+
+          // end of trial check
+          if (CurrentTime>Header->endtime)
+            TrialIsOver = true;
+        }
+        // debugging
+        // Rprintf("Finished Trial %d, sample %d\n",iTrial,sampcount);
+      }
+
+#ifdef EDFDEBUG
+      Rprintf("Success! (%i samples)\n", noelem);
+#endif
+
+      SEXP ans;
+      int nx(sampcount);
+      int ny;
+
+      if (asLogical(trials))
+          ny = LENGTH(fields)+1;
+      else
+          ny = LENGTH(fields);
+
+      PROTECT(ans = allocMatrix(REALSXP, nx, ny));
+      double* rans = REAL(ans);
+      fill_samples(fields,rans,sampcount,data);
+
+      if (asLogical(trials))
+        for(int i=0;i<sampcount;i++)
+          rans[i+sampcount*LENGTH(fields)]=INTEGER(eyetrial)[i];
+
+
+      UNPROTECT(2);
+      delete[] data;
+      edf_close_file(ef);
+      return(ans);
+    }
+    return(R_NilValue);
+  }
+
 }
+
