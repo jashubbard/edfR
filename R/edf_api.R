@@ -101,29 +101,30 @@ edf.all <- function(EDFfile,samples=FALSE,eventmask=FALSE)
 edf.trials <- function(EDFfile,samples=FALSE,eventmask=FALSE,
                        event.fields=c("time", "type", "read", "eye", "sttime", "entime","gstx", "gsty",
                                       "genx", "geny", "gavx", "gavy", "avel","pvel"),
-                       sample.fields= c("time","eye", "gxL","gyL","paL","gxR","gyR","paR"))
+                       sample.fields= c("time", "gxL","gyL","paL","gxR","gyR","paR"))
 {
   #getting trial-by-trial data (useful for merging with behavioral data)
   EDFfile <- path.expand((EDFfile))
 
+  R.utils::printf('Loading file %s\n',EDFfile)
   # holder for our output
   output = list()
 
-  data <- .Call("get_trial_data",EDFfile,event.fields,sample.fields,as.numeric(samples))
+  data <- .Call("get_trial_data",EDFfile,event.fields,sample.fields,0)
 
   # grab headers, do some resahping to make a nice data frame
-  headers <- data[[1]]
-  headers <- apply(headers,2,as.numeric)
-  headers <- data.frame(headers)
-  names(headers) <- c('eyetrial','starttime','endtime','duration')
+  output$headers <- data[[1]]
+  output$headers <- apply(output$headers,2,as.numeric)
+  output$headers <- data.frame(output$headers)
+  names(output$headers) <- c('eyetrial','starttime','endtime','duration')
 
   # do the same with events
   events <- as.data.frame(do.call(rbind,data[[2]]))
   names(events) <- c(event.fields,'eyetrial')
   # then subset for our fixations, saccades, and blinks (with relevant fields)
-  fixes <- subset(events,type==8)[,c('eyetrial','sttime','entime','gavx','gavy')]
-  saccs <- subset(events,type==6)[,c('eyetrial','sttime','entime','gstx','gsty','genx','geny','avel','pvel')]
-  blinks <- subset(events,type==4)[,c('eyetrial','sttime','entime')]
+  output$fixations <- subset(events,type==8)[,c('eyetrial','sttime','entime','gavx','gavy')]
+  output$saccades <- subset(events,type==6)[,c('eyetrial','sttime','entime','gstx','gsty','genx','geny','avel','pvel')]
+  output$blinks <- subset(events,type==4)[,c('eyetrial','sttime','entime')]
 
  # and messages. do some reshaping because it starts as nested lists
   messages <- data[[3]]
@@ -131,35 +132,29 @@ edf.trials <- function(EDFfile,samples=FALSE,eventmask=FALSE,
   messages <- unlist(messages)
   messages[messages=='NULL'] <- NA
   events$message <- messages
-
+  output$messages <- events[!is.na(events$message),c('eyetrial','sttime','message')]
 
   if(samples)
   {
-    # grab samples if we ask for them, make into a data frame
-    samples <-as.data.frame(do.call(rbind,data[[4]]))
-    names(samples) <- c(sample.fields,'eyetrial')
-    samples <- samples[c('eyetrial',sample.fields)] #make trial the first variable
+    # grab samples if we ask for them, make into a data TABLE (faster for larger datasets)
+    output$samples <- edf.samples(EDFfile,fields = sample.fields,trials = TRUE, eventmask = F)
+
+    rm(data) #free up memory
+
+    #reorder columns
+    data.table::setcolorder(output$samples,c('eyetrial',sample.fields)) #make trial first variable
 
     if(eventmask)
-      samples <- eventmask(EDFfile,samples) #add our event mask if we ask for it
-
+      output$samples <- eventmask(trials=output) #add our event mask if we ask for it-- faster this way
   }
   else
-    samples <- NULL
+    output$samples <- NULL
 
-  # save everything
-  output$header <- headers
-  output$messages <- events[!is.na(events$message),c('eyetrial','sttime','message')]
-  output$samples <- samples
-  output$fixations <- fixes
-  output$saccades <- saccs
-  output$blinks <- blinks
-
-  output
+  return(output)
 
 }
 
-edf.samples <- function(EDFfile, fields=c("time","flags","gxL","gyL","paL","gxR","gyR","paR"), eventmask=F)
+edf.samples <- function(EDFfile, fields=c("time","flags","gxL","gyL","paL","gxR","gyR","paR"), eventmask=F,trials=F)
 {
   EDFfile <- path.expand((EDFfile))
   # Check fields:
@@ -171,15 +166,26 @@ edf.samples <- function(EDFfile, fields=c("time","flags","gxL","gyL","paL","gxR"
     if (!f %in% valid.fields)
       stop("Request for unknown field: ", f)
 
+
   # Check EDFfile:
   EDFfile <- as.character(EDFfile)
   if (!file.exists(EDFfile))
     stop("File does not exist: ", EDFfile)
 
-  data <- edf.samples.c(EDFfile, fields)
-  data <- as.data.frame(data)
-  colnames(data) <- fields
-  data$time <- as.integer(data$time)
+  if(trials)
+    data <- data.table::as.data.table(edf.samples.trialwise(EDFfile, fields))
+  else
+    data <- data.table::as.data.table(edf.samples.c(EDFfile, fields))
+
+
+  if(trials)
+    fields <- c(fields,'eyetrial')
+
+  # data <- data.table::as.data.table(data)
+  setnames(data,names(data),fields)
+  data[,time := as.integer(time)]
+  # colnames(data) <- fields
+  # data$time <- as.integer(data$time)
 
   #tihs adds an "event mask". Binary vectors indicating whether fixation/saccade/blink occurred for each sample
   if(eventmask)
@@ -188,7 +194,7 @@ edf.samples <- function(EDFfile, fields=c("time","flags","gxL","gyL","paL","gxR"
   }
 
 
-  data
+  return(data)
 }
 
 edf.samples.c <- function(EDFfile, fields)
@@ -201,6 +207,15 @@ edf.samples.c <- function(EDFfile, fields)
   #cat("(", time2-time1, "seconds)\n")
   data
 }
+
+edf.samples.trialwise <- function(EDFfile, fields)
+{
+  data <- .Call("get_samples_trialwise",EDFfile, fields,TRUE)
+  if (is.null(data))
+    stop("Reading file ", EDFfile, " failed.")
+  data
+}
+
 
 edf.recordings <- function(EDFfile, fields=c("time","state","record_type","pupil_type","recording_mode","filter_type","sample_rate","pos_type","eye"))
 {

@@ -14,6 +14,8 @@ edf.samples(EDFfile, fields)
     names of the fields to load.}
   \item{eventmask}{logical indicating whether to add
     an \code{\link{eventmask}} to the samples}
+  \item{trials}{logical indicating whether to include
+    trial information (will add a variable called \code{eyetrial}}
 }
 \details{
 \bold{fields} may be:
@@ -38,7 +40,7 @@ a dataframe containing the specified fields of the samples.
 }
 %\references{}
 %\note{}
-\author{Guenther, T. and von der Malsburg, T.}
+\author{Guenther, T., Jason Hubbard, and von der Malsburg, T.}
 %\seealso{}
 \examples{
 \dontrun{
@@ -47,5 +49,8 @@ edf.samples("example.EDF",
 
 edf.samples(EDFfile="example.EDF",
 	fields=c("time","gxL","gyL","paL","gxR","gyR","paR"))
+
+#imports trial information
+edf.samples(EDFfile='example.EDF', trials=T)
 }}
 %\keyword{}

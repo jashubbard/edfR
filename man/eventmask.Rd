@@ -4,12 +4,14 @@
 \alias{eventmask}
 \title{Add an event mask to sample data}
 \usage{
-eventmask(EDFfile, samples = NULL)
+eventmask(EDFfile = NULL, samples = NULL, trials = NULL)
 }
 \arguments{
 \item{EDFfile}{path to an EDF file}
 
 \item{samples}{a data frame of sample data, resulting from \code{\link{edf.samples}}}
+
+\item{trials}{(optional). Output from \code{\link{edf.trials}}. Provide this instead of the EDFfile and samples}
 }
 \value{
 A data frame of the same sample data, with the variables \code{fixation}, \code{saccade}, and \code{blink} added
