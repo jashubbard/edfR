@@ -182,7 +182,11 @@ edf.samples <- function(EDFfile, fields=c("time","flags","gxL","gyL","paL","gxR"
     fields <- c(fields,'eyetrial')
 
   # data <- data.table::as.data.table(data)
+<<<<<<< HEAD
   data.table::setnames(data,names(data),fields)
+=======
+  setnames(data,names(data),fields)
+>>>>>>> e7a6b9b51c981966457cd01a5603335f277a5496
   data[,time := as.integer(time)]
   # colnames(data) <- fields
   # data$time <- as.integer(data$time)
