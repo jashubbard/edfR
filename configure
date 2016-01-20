@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #make the Makevars file
-if [ ! -e "./src/Makevars" ]; then
+#if [ ! -e "./src/Makevars" ]; then
 touch ./src/Makevars
-fi
+#fi
 
 #if mac
 if [[ `uname` -eq Darwin ]] ; then
@@ -12,6 +12,6 @@ echo "PKG_LIBS=-framework edfapi -F/Library/Frameworks/" > ./src/Makevars
 #if linux
 elif [[ `uname` -eq Linux ]] ;then
 
-echo "PKG_LIBS=-L/usr/local/lib -ledfapi -lm" > ./src/Makevars
+echo "PKG_LIBS=-L/usr/lib -ledfapi -lm" > ./src/Makevars
 
 fi
