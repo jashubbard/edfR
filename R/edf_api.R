@@ -112,6 +112,7 @@ edf.trials <- function(EDFfile,samples=FALSE,eventmask=FALSE,
 
   data <- .Call("get_trial_data",EDFfile,event.fields,sample.fields,0)
 
+  if(!is.null(data)){
   # grab headers, do some resahping to make a nice data frame
   output$headers <- data[[1]]
   output$headers <- apply(output$headers,2,as.numeric)
@@ -149,6 +150,11 @@ edf.trials <- function(EDFfile,samples=FALSE,eventmask=FALSE,
   }
   else
     output$samples <- NULL
+  }
+  else{
+
+    output <- NULL
+  }
 
   return(output)
 

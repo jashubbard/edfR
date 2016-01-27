@@ -26,7 +26,7 @@ edf.trialcount <- function(EDFfile)
 {
   EDFfile <- path.expand((EDFfile))
   count <- .Call("get_trial_count",EDFfile)
-  count
+  return(count)
 
 }
 
@@ -370,9 +370,9 @@ edf.batch <- function(EDFfiles=NULL,pattern=NULL,samples=FALSE,do.plot=TRUE,save
   #if we give a directory and pattern, load all files from that directory
   if(!is.null(pattern) && length(EDFfiles)==1)
   {
-   edfs <- list.files(path=EDFfiles,pattern=glob2rx(pattern))
-   if(length(edfs)==0)
-     stop('No EDFs found using the specified pattern')
+    edfs <- list.files(path=EDFfiles,pattern=glob2rx(pattern))
+    if(length(edfs)==0)
+      stop('No EDFs found using the specified pattern')
 
     EDFfiles <- paste(EDFfiles,edfs,sep='')
 
@@ -380,7 +380,7 @@ edf.batch <- function(EDFfiles=NULL,pattern=NULL,samples=FALSE,do.plot=TRUE,save
 
   for(f in seq_along(EDFfiles))
   {
-    print(paste('Loading file:',path.expand(EDFfiles[[f]])))
+    # print(paste('Loading file:',path.expand(EDFfiles[[f]])))
     # get a clean name from the edf files
     justfile <- sub("^([^.]*).*", "\\1", basename(EDFfiles[[f]]))
     ID <- as.numeric(gsub("([0-9]*).*","\\1",justfile))
@@ -388,69 +388,75 @@ edf.batch <- function(EDFfiles=NULL,pattern=NULL,samples=FALSE,do.plot=TRUE,save
     #import
     trials <- edf.trials(EDFfiles[[f]],samples=samples,eventmask=T)
 
-    #and ID and filename elements to the list
-    trials$ID <- ID
-    trials$filename <- EDFfiles[[f]]
+    if(!is.null(trials)){
+      #and ID and filename elements to the list
+      trials$ID <- ID
+      trials$filename <- EDFfiles[[f]]
 
-    #add a (numeric only) ID column to each data frame
-    trials$fixations$ID <- ID
-    trials$saccades$ID <- ID
-    trials$blinks$ID <- ID
-    trials$messages$ID <- ID
-    trials$header$ID <- ID
+      #add a (numeric only) ID column to each data frame
+      trials$fixations$ID <- ID
+      trials$saccades$ID <- ID
+      trials$blinks$ID <- ID
+      trials$messages$ID <- ID
+      trials$header$ID <- ID
 
-    #including samples if we imported them
-    if(!is.null(trials$samples))
-      trials$samples$ID <- ID
+      #including samples if we imported them
+      if(!is.null(trials$samples))
+        trials$samples$ID <- ID
 
-    #save into overall list
-    allt[[f]] <- trials
+      #save into overall list
+      allt[[f]] <- trials
 
-    if(do.plot)
+      if(do.plot)
       {
-      if(save.plot)
-        outfile = file.path(outdir,paste(justfile,'.pdf',sep=''))
-      else
-        outfile=NULL
+        if(save.plot)
+          outfile = file.path(outdir,paste(justfile,'.pdf',sep=''))
+        else
+          outfile=NULL
 
-      edf.plot(fixdata=trials$fixations,theme=plot.theme,outfile = outfile,plot.title=justfile,res=plot.res)
-    }
-
-    if(save.files=='R' && !is.null(outdir))
-    {
-      outdata <- file.path(outdir,paste(justfile,'.RData',sep=''))
-      print(sprintf('Writing file %s',outdata))
-      save(trials,file=outdata);
-    }
-    else if(save.files=='matlab' && !is.null(outdir))
-    {
-      if (!requireNamespace("R.matlab", quietly = TRUE)) {
-        stop("R.matlab package needed in order to save .mat files.",
-             call. = FALSE)
+        edf.plot(fixdata=trials$fixations,theme=plot.theme,outfile = outfile,plot.title=justfile,res=plot.res)
       }
 
-      outdata <- file.path(outdir,paste(justfile,'.mat',sep=''))
-      print(sprintf('Writing file %s',outdata))
+      if(save.files=='R' && !is.null(outdir))
+      {
+        outdata <- file.path(outdir,paste(justfile,'.RData',sep=''))
+        cat(sprintf('Writing file %s\n',outdata))
+        save(trials,file=outdata);
+      }
+      else if(save.files=='matlab' && !is.null(outdir))
+      {
+        if (!requireNamespace("R.matlab", quietly = TRUE)) {
+          stop("R.matlab package needed in order to save .mat files.",
+               call. = FALSE)
+        }
 
-      #R.matlab saves everything as a matrix with no column names, so we save them separately
-      trials$fixationnames <- t(names(trials$fixations))
-      trials$saccadenames <- t(names(trials$saccades))
-      trials$blinknames <- t(names(trials$blinks))
-      trials$messagenames <- t(names(trials$messages))
+        outdata <- file.path(outdir,paste(justfile,'.mat',sep=''))
+        cat(sprintf('Writing file %s\n',outdata))
 
-      if(samples)
-        trials$samplenames <- t(names(trials$samples))
+        #R.matlab saves everything as a matrix with no column names, so we save them separately
+        trials$fixationnames <- t(names(trials$fixations))
+        trials$saccadenames <- t(names(trials$saccades))
+        trials$blinknames <- t(names(trials$blinks))
+        trials$messagenames <- t(names(trials$messages))
+
+        if(samples)
+          trials$samplenames <- t(names(trials$samples))
 
 
-      R.matlab::writeMat(outdata,eyedata=trials)
+        R.matlab::writeMat(outdata,eyedata=trials)
 
+      }
+
+      cat(sprintf('Done with %s\n\n', justfile))
     }
-
-    print(sprintf('Done with %s', justfile))
-
+    else{
+      cat(sprintf('**********SKIPPED %s ****************\n\n',justfile))
+      warning(sprintf('Problem with file %s',EDFfiles[[f]]), call. = FALSE)
     }
+  }
 
-  print("Done processing all files!")
+
+  cat("\nDone processing all files!\n\n")
   return(allt)
 }
 

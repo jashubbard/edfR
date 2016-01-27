@@ -193,10 +193,15 @@ extern "C" {
     // quickly get the number of trials from the edf
     int check(0);
     EDFFILE* ef = edf_open_file( as_string(filename), 0, 1, 0, &check);
-    int count = edf_get_trial_count(ef);
-    edf_close_file(ef);
-    SEXP ans = ScalarInteger(count);
-    return(ans);
+
+    if (ef){
+      int count = edf_get_trial_count(ef);
+      edf_close_file(ef);
+      SEXP ans = ScalarInteger(count);
+      return(ans);
+    }
+    return(R_NilValue);
+
   }
 
   SEXP get_trial_data(SEXP filename,SEXP evtfields,SEXP sampfields,SEXP getsamples)
@@ -206,6 +211,7 @@ extern "C" {
     int check(0);
     EDFFILE* ef = edf_open_file( as_string(filename), 0, 1,asInteger(getsamples), &check);
 
+    if(ef){
 
     // output the number of trials and elements
     int ntrials = edf_get_trial_count(ef);
@@ -447,7 +453,8 @@ extern "C" {
     UNPROTECT(5);
     return(alldata);
   }
-
+    return(R_NilValue); //if problems opening the file
+  }
 
   SEXP get_samples_trialwise(SEXP filename, SEXP fields, SEXP trials)
   {
@@ -481,10 +488,10 @@ extern "C" {
       {
 
         // navigating to the current trial
-        int JumpResults= edf_jump_to_trial(ef, iTrial);
+        // int JumpResults= edf_jump_to_trial(ef, iTrial);
 
         // obtaining its header
-        int GoodJump= edf_get_trial_header(ef, Header);
+        // int GoodJump= edf_get_trial_header(ef, Header);
 
         // samples/events data holders
         ALLF_DATA* CurrentData;
