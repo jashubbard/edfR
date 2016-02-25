@@ -488,15 +488,17 @@ extern "C" {
       {
 
         // navigating to the current trial
-        // int JumpResults= edf_jump_to_trial(ef, iTrial);
+        int JumpResults= edf_jump_to_trial(ef, iTrial);
 
         // obtaining its header
-        // int GoodJump= edf_get_trial_header(ef, Header);
+        int GoodJump= edf_get_trial_header(ef, Header);
 
         // samples/events data holders
         ALLF_DATA* CurrentData;
         UINT32 CurrentTime;
         bool TrialIsOver= false;
+
+        // Rprintf("iTrial: %d\n", iTrial+1);
 
         for(int type = edf_get_next_data(ef); type != NO_PENDING_ITEMS && !TrialIsOver; type = edf_get_next_data(ef))
         {
@@ -509,6 +511,7 @@ extern "C" {
             CurrentTime= CurrentData->fs.time;
             data[sampcount] = CurrentData->fs;
             INTEGER(eyetrial)[sampcount] =iTrial+1;
+
             sampcount++;
 
             break;
@@ -542,8 +545,9 @@ extern "C" {
       fill_samples(fields,rans,sampcount,data);
 
       if (asLogical(trials))
-        for(int i=0;i<sampcount;i++)
+        for(int i=0;i<sampcount;i++){
           rans[i+sampcount*LENGTH(fields)]=INTEGER(eyetrial)[i];
+        }
 
 
       UNPROTECT(2);
