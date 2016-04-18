@@ -177,7 +177,7 @@ if(!is.null(EDFfile) ){
   # get fixation data
   fixdata <- edf.events(EDFfile,type = c('ENDFIX'),fields = c('gavx','gavy'))
   # get just the edf file from the path
-  heading <- basename(f)
+  heading <- basename(EDFfile)
 }
   else
     heading=plot.title
