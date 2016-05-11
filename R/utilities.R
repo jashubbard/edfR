@@ -383,7 +383,9 @@ edf.batch <- function(EDFfiles=NULL,pattern=NULL,samples=FALSE,do.plot=TRUE,save
     # print(paste('Loading file:',path.expand(EDFfiles[[f]])))
     # get a clean name from the edf files
     justfile <- sub("^([^.]*).*", "\\1", basename(EDFfiles[[f]]))
-    ID <- as.numeric(gsub("([0-9]*).*","\\1",justfile))
+    # replace every occurrence of not-digits with nothing
+    # this gives then a string that contains only numbers
+    ID <- as.numeric(gsub("([^0-9])","",justfile))
 
     #import
     trials <- edf.trials(EDFfiles[[f]],samples=samples,eventmask=T)
