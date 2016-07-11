@@ -337,7 +337,8 @@ edf.trialcount <- function(EDFfile)
 #' or \code{save.files} are used
 #' @param plot.theme either "black" or "white" specifying the style of plot used in \code{\link{edf.plot}}
 #' @param plot.res an array specifying the screen resoluion (e.g., c(1024, 768), used for \code{\link{edf.plot}}
-#'
+#' @param event.fields array of strings specifying what event fields to import (default: fixations and saccades)
+#' @param sample.fields array of strings specifying sample fields to import (default: x,y, and pupil diameter)
 #'
 #' @return a list of all trial data that was imported. WARNING: if you import samples and try to save this as 1
 #' file it will be extremely large. It is better to use \code{save.files='R'} instead. All data will include a
@@ -362,7 +363,12 @@ edf.trialcount <- function(EDFfile)
 #'
 #' }
 #'
-edf.batch <- function(EDFfiles=NULL,pattern=NULL,samples=FALSE,do.plot=TRUE,save.plot=FALSE,save.files=NA,outdir=NULL,plot.theme='black',plot.res = NULL)
+edf.batch <- function(EDFfiles=NULL,pattern=NULL,samples=FALSE,
+                      do.plot=TRUE,save.plot=FALSE,save.files=NA,
+                      outdir=NULL,plot.theme='black',plot.res = NULL,
+                      event.fields=c("time", "type", "read", "eye", "sttime", "entime","gstx", "gsty",
+                                     "genx", "geny", "gavx", "gavy", "avel","pvel"),
+                      sample.fields= c("time", "gxL","gyL","paL","gxR","gyR","paR"))
 {
 
   allt <- list()
@@ -388,7 +394,8 @@ edf.batch <- function(EDFfiles=NULL,pattern=NULL,samples=FALSE,do.plot=TRUE,save
     ID <- as.numeric(gsub("([^0-9])","",justfile))
 
     #import
-    trials <- edf.trials(EDFfiles[[f]],samples=samples,eventmask=T)
+    trials <- edf.trials(EDFfiles[[f]],samples=samples,eventmask=T,event.fields=event.fields,
+                         sample.fields = sample.fields)
 
     if(!is.null(trials)){
       #and ID and filename elements to the list

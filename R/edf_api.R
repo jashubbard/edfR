@@ -143,7 +143,8 @@ edf.trials <- function(EDFfile,samples=FALSE,eventmask=FALSE,
     rm(data) #free up memory
 
     #reorder columns
-    data.table::setcolorder(output$samples,c('eyetrial',sample.fields)) #make trial first variable
+
+    data.table::setcolorder(output$samples,unique(c('eyetrial','time',sample.fields))) #make trial first variable
 
     if(eventmask)
       output$samples <- eventmask(trials=output) #add our event mask if we ask for it-- faster this way
@@ -164,7 +165,7 @@ edf.samples <- function(EDFfile, fields=c("time","flags","gxL","gyL","paL","gxR"
 {
   EDFfile <- path.expand((EDFfile))
   # Check fields:
-  fields <- unique(as.character(fields))
+  fields <- unique(c('time',as.character(fields)))
   valid.fields <- c("time", "flags", "pxL", "pxR", "pyL", "pyR", "hxL",
                     "hxR", "hyL", "hyR", "paL", "paR", "gxL", "gxR", "gyL",
                     "gyR", "rx", "ry", "errors")  # "status" removed in newer version of libedfapi
