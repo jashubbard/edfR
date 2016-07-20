@@ -6,4 +6,3 @@ export(":=")
 import(data.table)
 
 importFrom(data.table, ":=")
-
