@@ -184,6 +184,9 @@ edf.samples <- function(EDFfile, fields=c("time","flags","gxL","gyL","paL","gxR"
   else
     data <- data.table::as.data.table(edf.samples.c(EDFfile, fields))
 
+  #make extra-super sure that it's a data table, otherwise := doesn't work
+  if(!data.table::is.data.table(data))
+      data <- data.table::as.data.table(data)
 
   if(trials)
     fields <- c(fields,'eyetrial')

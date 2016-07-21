@@ -1,4 +1,8 @@
 exportPattern("^[[:alpha:]]+")
 importFrom(Rcpp, evalCpp)
 useDynLib(edfR)
+
+export(":=")
 import(data.table)
+
+importFrom(data.table, ":=")
