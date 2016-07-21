@@ -5,7 +5,7 @@
 Loads the samples of a SR EyeLink EDFfile.
 }
 \usage{
-edf.samples(EDFfile, fields)
+edf.samples(EDFfile, fields, eventmask=FALSE, trials=FALSE)
 }
 \arguments{
   \item{EDFfile}{a character string giving the
