@@ -1,12 +1,12 @@
 #include <string.h>
 
 
-// NOTE Both of the following are obsolete now because we're using isnan defined below.
+// NOTE Both of the following are obsolete now because we're using isanan defined below.
 //#include <opt.h> //for NaN
 //#define NaN 1e8
 
-#ifndef isnan
-bool isnan(double var)
+#ifndef isanan
+bool isanan(double var)
 {
   volatile double d = var;
   return d != d;
@@ -109,72 +109,72 @@ inline void fill_samples(SEXP fields, double* rans, const int& size, FSAMPLE* da
 	col = is_member("pxL",fields);
 	if(col != -1)
 		for(int j = 0; j < size; ++j)
-          rans[j + size*col] = (data[j].errors&CR_LOST_LEFT_WARNING || data[j].px[0]==MISSING_DATA || isnan(data[j].px[0])) ? NA_REAL : data[j].px[0];
+          rans[j + size*col] = (data[j].errors&CR_LOST_LEFT_WARNING || data[j].px[0]==MISSING_DATA || isanan(data[j].px[0])) ? NA_REAL : data[j].px[0];
 
 	col = is_member("pxR",fields);
 	if(col != -1)
 		for(int j = 0; j < size; ++j)
-          rans[j + size*col] = (data[j].errors&CR_LOST_RIGHT_WARNING || data[j].px[1]==MISSING_DATA || isnan(data[j].px[1])) ? NA_REAL : data[j].px[1];
+          rans[j + size*col] = (data[j].errors&CR_LOST_RIGHT_WARNING || data[j].px[1]==MISSING_DATA || isanan(data[j].px[1])) ? NA_REAL : data[j].px[1];
 
 	col = is_member("pyL",fields);
 	if(col != -1)
 		for(int j = 0; j < size; ++j)
-          rans[j + size*col] = (data[j].errors&CR_LOST_LEFT_WARNING || data[j].py[0]==MISSING_DATA || isnan(data[j].py[0])) ? NA_REAL : data[j].py[0];
+          rans[j + size*col] = (data[j].errors&CR_LOST_LEFT_WARNING || data[j].py[0]==MISSING_DATA || isanan(data[j].py[0])) ? NA_REAL : data[j].py[0];
 
 	col = is_member("pyR",fields);
 	if(col != -1)
 		for(int j = 0; j < size; ++j)
-          rans[j + size*col] = (data[j].errors&CR_LOST_RIGHT_WARNING || data[j].py[1]==MISSING_DATA || isnan(data[j].py[1])) ? NA_REAL : data[j].py[1];
+          rans[j + size*col] = (data[j].errors&CR_LOST_RIGHT_WARNING || data[j].py[1]==MISSING_DATA || isanan(data[j].py[1])) ? NA_REAL : data[j].py[1];
 
 	col = is_member("hxL",fields);
 	if(col != -1)
 		for(int j = 0; j < size; ++j)
-          rans[j + size*col] = (data[j].errors&CR_LOST_LEFT_WARNING || data[j].hx[0]==MISSING_DATA || isnan(data[j].hx[0])) ? NA_REAL : data[j].hx[0];
+          rans[j + size*col] = (data[j].errors&CR_LOST_LEFT_WARNING || data[j].hx[0]==MISSING_DATA || isanan(data[j].hx[0])) ? NA_REAL : data[j].hx[0];
 
 	col = is_member("hxR",fields);
 	if(col != -1)
 		for(int j = 0; j < size; ++j)
-          rans[j + size*col] = (data[j].errors&CR_LOST_RIGHT_WARNING || data[j].hx[1]==MISSING_DATA || isnan(data[j].hx[1])) ? NA_REAL : data[j].hx[1];
+          rans[j + size*col] = (data[j].errors&CR_LOST_RIGHT_WARNING || data[j].hx[1]==MISSING_DATA || isanan(data[j].hx[1])) ? NA_REAL : data[j].hx[1];
 
 	col = is_member("hyL",fields);
 	if(col != -1)
 		for(int j = 0; j < size; ++j)
-          rans[j + size*col] = (data[j].errors&CR_LOST_LEFT_WARNING || data[j].hy[0]==MISSING_DATA || isnan(data[j].hy[0])) ? NA_REAL : data[j].hy[0];
+          rans[j + size*col] = (data[j].errors&CR_LOST_LEFT_WARNING || data[j].hy[0]==MISSING_DATA || isanan(data[j].hy[0])) ? NA_REAL : data[j].hy[0];
 
 	col = is_member("hyR",fields);
 	if(col != -1)
 		for(int j = 0; j < size; ++j)
-          rans[j + size*col] = (data[j].errors&CR_LOST_RIGHT_WARNING || data[j].hy[1]==MISSING_DATA || isnan(data[j].hy[1])) ? NA_REAL : data[j].hy[1];
+          rans[j + size*col] = (data[j].errors&CR_LOST_RIGHT_WARNING || data[j].hy[1]==MISSING_DATA || isanan(data[j].hy[1])) ? NA_REAL : data[j].hy[1];
 
 	col = is_member("paL",fields);
 	if(col != -1)
 		for(int j = 0; j < size; ++j)
-          rans[j + size*col] = (data[j].errors&CR_LOST_LEFT_WARNING || data[j].pa[0]==MISSING_DATA || isnan(data[j].pa[0])) ? NA_REAL : data[j].pa[0];
+          rans[j + size*col] = (data[j].errors&CR_LOST_LEFT_WARNING || data[j].pa[0]==MISSING_DATA || isanan(data[j].pa[0])) ? NA_REAL : data[j].pa[0];
 
 	col = is_member("paR",fields);
 	if(col != -1)
 		for(int j = 0; j < size; ++j)
-          rans[j + size*col] = (data[j].errors&CR_LOST_RIGHT_WARNING || data[j].pa[1]==MISSING_DATA || isnan(data[j].pa[1])) ? NA_REAL : data[j].pa[1];
+          rans[j + size*col] = (data[j].errors&CR_LOST_RIGHT_WARNING || data[j].pa[1]==MISSING_DATA || isanan(data[j].pa[1])) ? NA_REAL : data[j].pa[1];
 
 	col = is_member("gxL",fields);
 	if(col != -1)
 		for(int j = 0; j < size; ++j)
-          rans[j + size*col] = (data[j].errors&CR_LOST_LEFT_WARNING || data[j].gx[0]==MISSING_DATA || isnan(data[j].gx[0])) ? NA_REAL : data[j].gx[0];
+          rans[j + size*col] = (data[j].errors&CR_LOST_LEFT_WARNING || data[j].gx[0]==MISSING_DATA || isanan(data[j].gx[0])) ? NA_REAL : data[j].gx[0];
 
 	col = is_member("gxR",fields);
 	if(col != -1)
 		for(int j = 0; j < size; ++j)
-          rans[j + size*col] = (data[j].errors&CR_LOST_RIGHT_WARNING || data[j].gx[1]==MISSING_DATA || isnan(data[j].gx[1])) ? NA_REAL : data[j].gx[1];
+          rans[j + size*col] = (data[j].errors&CR_LOST_RIGHT_WARNING || data[j].gx[1]==MISSING_DATA || isanan(data[j].gx[1])) ? NA_REAL : data[j].gx[1];
 
 	col = is_member("gyL",fields);
 	if(col != -1)
 		for(int j = 0; j < size; ++j)
-          rans[j + size*col] = (data[j].errors&CR_LOST_LEFT_WARNING || data[j].gy[0]==MISSING_DATA || isnan(data[j].gy[0])) ? NA_REAL : data[j].gy[0];
+          rans[j + size*col] = (data[j].errors&CR_LOST_LEFT_WARNING || data[j].gy[0]==MISSING_DATA || isanan(data[j].gy[0])) ? NA_REAL : data[j].gy[0];
 
 	col = is_member("gyR",fields);
 	if(col != -1)
 		for(int j = 0; j < size; ++j)
-          rans[j + size*col] = (data[j].errors&CR_LOST_RIGHT_WARNING || data[j].gy[1]==MISSING_DATA || isnan(data[j].gy[1])) ? NA_REAL : data[j].gy[1];
+          rans[j + size*col] = (data[j].errors&CR_LOST_RIGHT_WARNING || data[j].gy[1]==MISSING_DATA || isanan(data[j].gy[1])) ? NA_REAL : data[j].gy[1];
 
 	col = is_member("rx",fields);
 	if(col != -1)
