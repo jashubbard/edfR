@@ -603,3 +603,47 @@ combine.eyedata <- function(batchdata,fields=c('fixations','saccades','blinks','
 
 }
 
+#' @title Grab example data for testing edfR
+#'
+#' @description
+#' \code{edf.data} allows you to easily load some sample data bundled with the package
+#'
+#' @details
+#' \code{edf.data} can return a path to a sample edf file or the directory that file is in. This is helpful for
+#' testing functions if you don't have data handy.
+#'
+#' @param data the type of data you want ('edf' or 'path')
+#'
+#'
+#' @return a list with the edf file name, or a character string of the folder it's in
+#'
+#' @author Jason Hubbard, \email{hubbard3@@uoregon.edu}
+#'
+#' @examples
+#' \dontrun{
+#'
+#' #load some events
+#' ev <- edf.events(edf.data('edf'))
+#'
+#' #load using edf.batch
+#' allbatch <- edf.batch(edf.data('path'),'*.edf')
+#'
+#'
+#' }
+#'
+edf.data <- function(data){
+
+  #get path to data folder
+  d <- paste0(system.file('extdata', package='edfR'), .Platform$file.sep)
+
+  #find all edfs, get full path of each
+  edfs <-  list.files(path=d,'*.edf')
+  edfs <- file.path(d,edfs)
+
+  #return the proper data,depending on what we ask for
+  output <- switch(data,
+                   path = d,
+                   edf = edfs)
+
+  return(output)
+}
