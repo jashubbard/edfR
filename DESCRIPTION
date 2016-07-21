@@ -13,7 +13,8 @@ Imports:
     RcppArmadillo (>= 0.4.200.0),
     data.table
 Suggests:
-    R.matlab
+    R.matlab,
+    testthat
 LinkingTo:
     Rcpp, RcppArmadillo
 Depends: RcppArmadillo,

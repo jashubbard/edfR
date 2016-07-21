@@ -1,0 +1,15 @@
+
+language: r
+cache: packages
+
+
+sudo:
+  required
+
+before_install:
+  - wget http://download.sr-support.com/software/sr-research-public-key -O ~/sr.key
+  - sudo apt-key add ~/sr.key
+  - sudo sh -c 'echo "deb http://download.sr-support.com/software SRResearch main" >> /etc/apt/sources.list'
+  - sudo apt-get update
+  - sudo apt-get install edfapi-3.1
+
