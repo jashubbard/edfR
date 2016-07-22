@@ -1,15 +1,22 @@
 language: r
 cache: packages
-warnings_are_errors: false
-
 sudo:
   required
 
+os:
+ - linux
+ - osx
+
+warnings_are_errors: false
 
 before_install:
-  - wget http://download.sr-support.com/software/sr-research-public-key -O ~/sr.key
-  - sudo apt-key add ~/sr.key
-  - sudo sh -c 'echo "deb http://download.sr-support.com/software SRResearch main" >> /etc/apt/sources.list'
-  - sudo apt-get update
-  - sudo apt-get install edfapi-3.1
+ - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget http://download.sr-support.com/software/sr-research-public-key -O ~/sr.key; fi
+ - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-key add ~/sr.key; fi
+ - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo sh -c 'echo "deb http://download.sr-support.com/software SRResearch main" >> /etc/apt/sources.list'; fi
+ - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
+ - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install edfapi-3.1; fi
+
+ - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -L -o eyelink.mpkg.zip "https://www.dropbox.com/s/m5p3841eoh82kgg/EyelinkDisplayAPI_1.11.1.mpkg.zip?dl=1"; fi
+ - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then unzip eyelink.mpkg.zip; fi
+ - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo installer -pkg "EyelinkDisplayAPI_1.11.1.mpkg" -target / ; fi
 
