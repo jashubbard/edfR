@@ -1,4 +1,4 @@
-# edfR
+# edfR [![Build Status](https://travis-ci.org/jashubbard/edfR.svg?branch=master)](https://travis-ci.org/jashubbard/edfR)
 A package for importing SR-Research EDF files into R.
 
 This contains basic functions for importing event data (fixations, saccades, blinks), sample data (gaze position, pupil diameter), and messages directly from .edf files. There are also basic utilities for quickly plotting fixation data (`edf.plot`), for time-locking sample data relative to some event (`epoch.samples`), and for combining data across multiple subjects (`edf.batch` and `combine.eyedata`).
