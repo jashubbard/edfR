@@ -85,8 +85,8 @@ edf.all <- function(EDFfile,samples=FALSE,eventmask=FALSE)
 #' @param samples logical indicating whether to import samples (default=FALSE)
 #' @param eventmask logical indicating whether to add an \code{\link{eventmask}} to samples (default=FALSE)
 #'
-#' @return The output will be a list with 5 named elements (headers,fixations, saccades, blinks, and samples)
-#' each element being a data frame. Headers indicate the starting and stopping point for each trial. Each data
+#' @return The output will be a list with 5 named elements (header,fixations, saccades, blinks, and samples)
+#' each element being a data frame. Header indicates the starting and stopping point for each trial. Each data
 #' frame will have the variable \code{eyetrial} that indicates the trial number for that event/sample.
 #'
 #' @author Jason Hubbard, \email{hubbard3@@uoregon.edu}
@@ -114,10 +114,10 @@ edf.trials <- function(EDFfile,samples=FALSE,eventmask=FALSE,
 
   if(!is.null(data)){
   # grab headers, do some resahping to make a nice data frame
-  output$headers <- data[[1]]
-  output$headers <- apply(output$headers,2,as.numeric)
-  output$headers <- data.frame(output$headers)
-  names(output$headers) <- c('eyetrial','starttime','endtime','duration')
+  output$header <- data[[1]]
+  output$header <- apply(output$header,2,as.numeric)
+  output$header <- data.frame(output$header)
+  names(output$header) <- c('eyetrial','starttime','endtime','duration')
 
   # do the same with events
   events <- as.data.frame(do.call(rbind,data[[2]]))
