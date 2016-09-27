@@ -403,11 +403,13 @@ edf.batch <- function(EDFfiles=NULL,pattern=NULL,samples=FALSE,
       trials$filename <- EDFfiles[[f]]
 
       #add a (numeric only) ID column to each data frame
-      trials$fixations$ID <- ID
-      trials$saccades$ID <- ID
-      trials$blinks$ID <- ID
-      trials$messages$ID <- ID
-      trials$header$ID <- ID
+      for(t in c('fixations','saccades','blinks','messages','headers')){
+
+        #check if there is data first (in case there are no blinks/fixations)
+        if(nrow(trials[[t]])>0)
+          trials[[t]]$ID <- ID
+
+      }
 
       #including samples if we imported them
       if(!is.null(trials$samples))
