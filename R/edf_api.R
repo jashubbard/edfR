@@ -106,7 +106,7 @@ edf.trials <- function(EDFfile,samples=FALSE,eventmask=FALSE,
   #getting trial-by-trial data (useful for merging with behavioral data)
   EDFfile <- path.expand((EDFfile))
 
-  R.utils::printf('Loading file %s\n',EDFfile)
+  write(paste("Loading file", EDFfile), stdout())
   # holder for our output
   output = list()
 
